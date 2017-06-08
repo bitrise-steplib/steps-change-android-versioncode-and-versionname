@@ -1,6 +1,6 @@
 title: Change Android versionCode and versionName
 summary: Change Android versionCode and versionName in build.gradle file.
-description: Set or bump your Android project's versionCode and versionName in build.gradle file.
+description: Change your Android project's versionCode and versionName in build.gradle file.
 website: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 source_code_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 support_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname

@@ -1,0 +1,30 @@
+{
+	"ImportPath": "github.com/bitrise-community/steps-change-android-versioncode-and-versionname",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/fileutil",
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/log",
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+		},
+		{
+			"ImportPath": "github.com/bitrise-tools/go-steputils/input",
+			"Rev": "a848c9870ff7d745a8fb2a951e1c81fcb147b4ec"
+		}
+	]
+}

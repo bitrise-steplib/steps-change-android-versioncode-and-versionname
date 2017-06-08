@@ -158,7 +158,7 @@ workflows:
       - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
       - BITRISE_STEP_ID: change-android-versioncode-and-versionname
       - BITRISE_STEP_VERSION: $BITRISE_STEP_VERSION
-      - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
+      - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname.git
     description: |-
       If this is the first time you try to share a Step you should
       first call: $ bitrise share

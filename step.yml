@@ -44,3 +44,10 @@ inputs:
       description: |-
         New versionName to set.
         Leave this input empty to do not modify versionName.
+  - version_code_offset:
+    opts:
+      title: versionCode Offset
+      summary: Offset value for versionCode.
+      description: |-
+        Offset value for versionCode.
+        Leave this input empty to do not modify versionCode.

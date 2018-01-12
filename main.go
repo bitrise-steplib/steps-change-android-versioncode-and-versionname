@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strconv"
 
 	"bufio"
 	"strings"
@@ -27,11 +28,19 @@ func main() {
 		logFail("Issue with input build_gradle_path - %s", err)
 	}
 
-	newVersionCode := os.Getenv("new_version_code")
+	versionCodeOffset := os.Getenv("version_code_offset")
 	newVersionName := os.Getenv("new_version_name")
+	newVersionCode := os.Getenv("new_version_code")
+
+	if versionCodeOffsetInt, err1 := strconv.ParseInt(versionCodeOffset, 10, 32); err1 == nil {
+		if newVersionCodeInt, err2 := strconv.ParseInt(newVersionCode, 10, 32); err2 == nil {
+			newVersionCode = fmt.Sprintf("%v", newVersionCodeInt+versionCodeOffsetInt)
+		}
+	}
 
 	log.Infof("Configs:")
 	log.Printf("- build_gradle_path: %s", buildGradlePth)
+	log.Printf("- version_code_offset: %s", versionCodeOffset)
 	log.Printf("- new_version_code: %s", newVersionCode)
 	log.Printf("- new_version_name: %s", newVersionName)
 	// ---

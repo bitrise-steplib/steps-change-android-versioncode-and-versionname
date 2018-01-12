@@ -41,6 +41,7 @@ workflows:
         - build_gradle_path: "./app/build.gradle"
         - new_version_code: "2"
         - new_version_name: "2.0"
+        - version_code_offset: ""
 
   go-tests:
     before_run:

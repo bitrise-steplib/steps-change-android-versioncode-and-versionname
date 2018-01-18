@@ -75,14 +75,20 @@ func main() {
 	fmt.Println()
 	log.Infof("Updating build.gradle file")
 
+	finalVersionCode := ""
+	finalVersionName := ""
+
 	for scanner.Scan() {
 		lineNum++
 
 		line := scanner.Text()
 
-		if newVersionCode != "" {
-			if match := versionCodeRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
-				oldVersionCode := match[1]
+		if match := versionCodeRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+			oldVersionCode := match[1]
+			finalVersionCode = oldVersionCode
+
+			if newVersionCode != "" {
+				finalVersionCode = newVersionCode
 
 				updatedLine := strings.Replace(line, oldVersionCode, newVersionCode, -1)
 				updatedVersionCodeNum++
@@ -90,13 +96,17 @@ func main() {
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 
 				updatedLines = append(updatedLines, updatedLine)
-				continue
 			}
+
+			continue
 		}
 
-		if newVersionName != "" {
-			if match := versionNameRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
-				oldVersionName := match[1]
+		if match := versionNameRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+			oldVersionName := match[1]
+			finalVersionName = oldVersionName
+
+			if newVersionName != "" {
+				finalVersionName = newVersionName
 
 				updatedLine := strings.Replace(line, oldVersionName, newVersionName, -1)
 				updatedVersionNameNum++
@@ -104,8 +114,9 @@ func main() {
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 
 				updatedLines = append(updatedLines, updatedLine)
-				continue
 			}
+
+			continue
 		}
 
 		updatedLines = append(updatedLines, line)
@@ -119,10 +130,10 @@ func main() {
 	log.Donef("%d versionCode updated", updatedVersionCodeNum)
 	log.Donef("%d versionName updated", updatedVersionNameNum)
 
-	if err := exportEnv("ANDROID_VERSION_NAME", "test"); err != nil {
+	if err := exportEnv("ANDROID_VERSION_NAME", finalVersionName); err != nil {
 		logFail("Failed to export $ANDROID_VERSION env: %s", err)
 	}
-	if err := exportEnv("ANDROID_VERSION_CODE", "test"); err != nil {
+	if err := exportEnv("ANDROID_VERSION_CODE", finalVersionCode); err != nil {
 		logFail("Failed to export $ANDROID_VERSION env: %s", err)
 	}
 

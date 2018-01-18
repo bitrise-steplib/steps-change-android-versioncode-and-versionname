@@ -22,9 +22,13 @@ func logFail(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
-func exportEnv(key, value string) error {
-	cmd := command.New("envman", "add", "--key", key, "--value", value)
-	return cmd.Run()
+func exportOutput(outputs map[string]string) {
+	for envKey, envValue := range outputs {
+		cmd := command.New("envman", "add", "--key", envKey, "--value", envValue)
+		if err := cmd.Run(); err != nil {
+			logFail("Failed to export %s env: %s", envKey, err)
+		}
+	}
 }
 
 func main() {
@@ -126,16 +130,14 @@ func main() {
 	}
 	// ---
 
+	defer exportOutput(map[string]string{
+		"ANDROID_VERSION_NAME": finalVersionName,
+		"ANDROID_VERSION_CODE": finalVersionCode,
+	})
+
 	fmt.Println()
 	log.Donef("%d versionCode updated", updatedVersionCodeNum)
 	log.Donef("%d versionName updated", updatedVersionNameNum)
-
-	if err := exportEnv("ANDROID_VERSION_NAME", finalVersionName); err != nil {
-		logFail("Failed to export $ANDROID_VERSION env: %s", err)
-	}
-	if err := exportEnv("ANDROID_VERSION_CODE", finalVersionCode); err != nil {
-		logFail("Failed to export $ANDROID_VERSION env: %s", err)
-	}
 
 	updatedBuildGradleContent := strings.Join(updatedLines, "\n")
 

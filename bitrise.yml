@@ -42,6 +42,14 @@ workflows:
         - new_version_code: "2"
         - new_version_name: "2.0"
         - version_code_offset: ""
+    - script:
+        title: Output test
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            echo "ANDROID_VERSION_NAME": ${ANDROID_VERSION_NAME}"
+            echo "ANDROID_VERSION_CODE": ${ANDROID_VERSION_CODE}"
 
   go-tests:
     before_run:

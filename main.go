@@ -11,6 +11,7 @@ import (
 
 	"fmt"
 
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-tools/go-steputils/input"
@@ -19,6 +20,11 @@ import (
 func logFail(format string, v ...interface{}) {
 	log.Errorf(format, v...)
 	os.Exit(1)
+}
+
+func exportEnv(key, value string) error {
+	cmd := command.New("envman", "add", "--key", key, "--value", value)
+	return cmd.Run()
 }
 
 func main() {
@@ -112,6 +118,13 @@ func main() {
 	fmt.Println()
 	log.Donef("%d versionCode updated", updatedVersionCodeNum)
 	log.Donef("%d versionName updated", updatedVersionNameNum)
+
+	if err := exportEnv("ANDROID_VERSION_NAME", "test"); err != nil {
+		logFail("Failed to export $ANDROID_VERSION env: %s", err)
+	}
+	if err := exportEnv("ANDROID_VERSION_CODE", "test"); err != nil {
+		logFail("Failed to export $ANDROID_VERSION env: %s", err)
+	}
 
 	updatedBuildGradleContent := strings.Join(updatedLines, "\n")
 

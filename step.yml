@@ -1,6 +1,10 @@
 title: Change Android versionCode and versionName
-summary: Change Android versionCode and versionName in build.gradle file.
-description: Change your Android project's versionCode and versionName in build.gradle file.
+summary: |
+  Change Android versionCode and versionName in build.gradle file.
+  Extracts Android gradle attributes to eviroment variables
+description: |
+  Change your Android project's versionCode and versionName in build.gradle file.
+  Extracts Android gradle attributes to eviroment variables
 website: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 source_code_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 support_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
@@ -37,6 +41,13 @@ inputs:
       description: |-
         New versionCode to set.
         Leave this input empty to do not modify versionCode.
+  - version_code_offset:
+    opts:
+      title: versionCode Offset
+      summary: This offset will be added to verson code input's value.
+      description: |
+        This offset will be added to verson code input's value.
+      is_required: false
   - new_version_name:
     opts:
       title: New versionName
@@ -44,3 +55,13 @@ inputs:
       description: |-
         New versionName to set.
         Leave this input empty to do not modify versionName.
+outputs:
+  - GRADLE_FILE_PATH:
+    opts:
+      title: "Gradle file path"
+  - GRADLE_VERSION_CODE:
+    opts:
+      title: "Gradle version code"
+  - GRADLE_VERSION_NAME:
+    opts:
+      title: "Gradle version name"

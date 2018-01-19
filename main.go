@@ -2,6 +2,9 @@ package main
 
 import (
 	"os"
+	"os/exec"
+
+	"strconv"
 
 	"bufio"
 	"strings"
@@ -29,6 +32,11 @@ func main() {
 
 	newVersionCode := os.Getenv("new_version_code")
 	newVersionName := os.Getenv("new_version_name")
+
+	versionCodeOffset, err := strconv.Atoi(os.Getenv("version_code_offset"))
+	if err != nil {
+		versionCodeOffset=0
+	}
 
 	log.Infof("Configs:")
 	log.Printf("- build_gradle_path: %s", buildGradlePth)
@@ -65,30 +73,46 @@ func main() {
 
 		line := scanner.Text()
 
-		if newVersionCode != "" {
-			if match := versionCodeRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
-				oldVersionCode := match[1]
-
+		if match := versionCodeRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+			oldVersionCode := match[1]
+			cmdLog1, err1 := exec.Command("bitrise", "envman", "add", "--key", "GRADLE_VERSION_CODE", "--value", oldVersionCode).CombinedOutput()
+			if err1 != nil {
+				logFail("Failed to expose output with envman, error: %#v | output: %s", err1, cmdLog1)
+			}
+			if newVersionCode != "" {
+				iNewVersionCode, _ := strconv.Atoi(newVersionCode)
+				newVersionCode=strconv.Itoa(iNewVersionCode+versionCodeOffset)
 				updatedLine := strings.Replace(line, oldVersionCode, newVersionCode, -1)
 				updatedVersionCodeNum++
 
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 
 				updatedLines = append(updatedLines, updatedLine)
+				cmdLog1, err1 := exec.Command("bitrise", "envman", "add", "--key", "GRADLE_VERSION_CODE", "--value", newVersionCode).CombinedOutput()
+				if err1 != nil {
+					logFail("Failed to expose output with envman, error: %#v | output: %s", err1, cmdLog1)
+				}
 				continue
 			}
 		}
 
-		if newVersionName != "" {
-			if match := versionNameRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
-				oldVersionName := match[1]
-
+		if match := versionNameRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+			oldVersionName := match[1]
+			cmdLog2, err2 := exec.Command("bitrise", "envman", "add", "--key", "GRADLE_VERSION_NAME", "--value", oldVersionName).CombinedOutput()
+			if err2 != nil {
+				logFail("Failed to expose output with envman, error: %#v | output: %s", err2, cmdLog2)
+			}
+			if newVersionName != "" {
 				updatedLine := strings.Replace(line, oldVersionName, newVersionName, -1)
 				updatedVersionNameNum++
 
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 
 				updatedLines = append(updatedLines, updatedLine)
+				cmdLog2, err2 := exec.Command("bitrise", "envman", "add", "--key", "GRADLE_VERSION_NAME", "--value", newVersionName).CombinedOutput()
+				if err2 != nil {
+					logFail("Failed to expose output with envman, error: %#v | output: %s", err2, cmdLog2)
+				}
 				continue
 			}
 		}
@@ -105,6 +129,11 @@ func main() {
 	log.Donef("%d versionName updated", updatedVersionNameNum)
 
 	updatedBuildGradleContent := strings.Join(updatedLines, "\n")
+
+	cmdLog, err := exec.Command("bitrise", "envman", "add", "--key", "GRADLE_FILE_PATH", "--value", buildGradlePth).CombinedOutput()
+	if err != nil {
+		logFail("Failed to expose output with envman, error: %#v | output: %s", err, cmdLog)
+	}
 
 	if err := fileutil.WriteStringToFile(buildGradlePth, updatedBuildGradleContent); err != nil {
 		logFail("Failed to write build.gradle file, error: %s", err)

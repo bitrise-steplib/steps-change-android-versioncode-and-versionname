@@ -50,21 +50,15 @@ func (configs ConfigsModel) validate() error {
 
 type updateFn func(line string, lineNum int, matches []string) string
 
-func findAndUpdate(reader io.Reader, update map[string]updateFn) (string, error) {
+func findAndUpdate(reader io.Reader, update map[*regexp.Regexp]updateFn) (string, error) {
 	scanner := bufio.NewScanner(reader)
-	updatedLines := []string{}
-
-	reByPattern := make(map[string]*regexp.Regexp, len(update))
-	for pattern := range update {
-		reByPattern[pattern] = regexp.MustCompile(pattern)
-	}
+	var updatedLines []string
 
 	for lineNum := 0; scanner.Scan(); lineNum++ {
 		line := scanner.Text()
 
 		updated := false
-		for pattern, fn := range update {
-			re := reByPattern[pattern]
+		for re, fn := range update {
 			if match := re.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
 				if updatedLine := fn(line, lineNum, match); updatedLine != "" {
 					updatedLines = append(updatedLines, updatedLine)
@@ -81,7 +75,7 @@ func findAndUpdate(reader io.Reader, update map[string]updateFn) (string, error)
 	return strings.Join(updatedLines, "\n"), scanner.Err()
 }
 
-func exportOutput(outputs map[string]string) error {
+func exportOutputs(outputs map[string]string) error {
 	for envKey, envValue := range outputs {
 		cmd := command.New("envman", "add", "--key", envKey, "--value", envValue)
 		if err := cmd.Run(); err != nil {
@@ -135,14 +129,11 @@ func main() {
 		logFail("Failed to read build.gradle file, error: %s", err)
 	}
 
-	finalVersionCode := ""
-	finalVersionName := ""
+	var finalVersionCode, finalVersionName string
+	var updatedVersionCodes, updatedVersionNames int
 
-	updatedVersionCodeNum := 0
-	updatedVersionNameNum := 0
-
-	updatedBuildGradleContent, err := findAndUpdate(f, map[string]updateFn{
-		`^versionCode (?P<version_code>.*)`: func(line string, lineNum int, match []string) string {
+	updatedBuildGradleContent, err := findAndUpdate(f, map[*regexp.Regexp]updateFn{
+		regexp.MustCompile(`^versionCode (?P<version_code>.*)`): func(line string, lineNum int, match []string) string {
 			oldVersionCode := match[1]
 			finalVersionCode = oldVersionCode
 			updatedLine := ""
@@ -150,13 +141,13 @@ func main() {
 			if configs.NewVersionCode != "" {
 				finalVersionCode = strconv.Itoa(newVersionCode)
 				updatedLine = strings.Replace(line, oldVersionCode, finalVersionCode, -1)
-				updatedVersionCodeNum++
+				updatedVersionCodes++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 			}
 
 			return updatedLine
 		},
-		`^versionName "(?P<version_code>.*)"`: func(line string, lineNum int, match []string) string {
+		regexp.MustCompile(`^versionName "(?P<version_code>.*)"`): func(line string, lineNum int, match []string) string {
 			oldVersionName := match[1]
 			finalVersionName = oldVersionName
 			updatedLine := ""
@@ -164,7 +155,7 @@ func main() {
 			if configs.NewVersionName != "" {
 				finalVersionName = configs.NewVersionName
 				updatedLine = strings.Replace(line, oldVersionName, finalVersionName, -1)
-				updatedVersionNameNum++
+				updatedVersionNames++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 			}
 
@@ -177,7 +168,7 @@ func main() {
 
 	//
 	// export outputs
-	if err := exportOutput(map[string]string{
+	if err := exportOutputs(map[string]string{
 		"ANDROID_VERSION_NAME": finalVersionName,
 		"ANDROID_VERSION_CODE": finalVersionCode,
 	}); err != nil {
@@ -189,6 +180,6 @@ func main() {
 	}
 
 	fmt.Println()
-	log.Donef("%d versionCode updated", updatedVersionCodeNum)
-	log.Donef("%d versionName updated", updatedVersionNameNum)
+	log.Donef("%d versionCode updated", updatedVersionCodes)
+	log.Donef("%d versionName updated", updatedVersionNames)
 }

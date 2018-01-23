@@ -60,14 +60,20 @@ func findAndUpdate(reader io.Reader, update map[string]updateFn) (string, error)
 	}
 
 	for lineNum := 0; scanner.Scan(); lineNum++ {
-		line := strings.TrimSpace(scanner.Text())
+		line := scanner.Text()
 
+		updated := false
 		for pattern, fn := range update {
 			re := reByPattern[pattern]
-			if match := re.FindStringSubmatch(line); len(match) == 2 {
+			if match := re.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
 				updatedLine := fn(line, lineNum, match)
 				updatedLines = append(updatedLines, updatedLine)
+				updated = true
+				break
 			}
+		}
+		if !updated {
+			updatedLines = append(updatedLines, line)
 		}
 	}
 

@@ -54,11 +54,16 @@ func findAndUpdate(reader io.Reader, update map[string]updateFn) (string, error)
 	scanner := bufio.NewScanner(reader)
 	updatedLines := []string{}
 
+	reByPattern := make(map[string]*regexp.Regexp, len(update))
+	for pattern := range update {
+		reByPattern[pattern] = regexp.MustCompile(pattern)
+	}
+
 	for lineNum := 0; scanner.Scan(); lineNum++ {
 		line := strings.TrimSpace(scanner.Text())
 
 		for pattern, fn := range update {
-			re := regexp.MustCompile(pattern)
+			re := reByPattern[pattern]
 			if match := re.FindStringSubmatch(line); len(match) == 2 {
 				updatedLine := fn(line, lineNum, match)
 				updatedLines = append(updatedLines, updatedLine)

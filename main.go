@@ -66,10 +66,11 @@ func findAndUpdate(reader io.Reader, update map[string]updateFn) (string, error)
 		for pattern, fn := range update {
 			re := reByPattern[pattern]
 			if match := re.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
-				updatedLine := fn(line, lineNum, match)
-				updatedLines = append(updatedLines, updatedLine)
-				updated = true
-				break
+				if updatedLine := fn(line, lineNum, match); updatedLine != "" {
+					updatedLines = append(updatedLines, updatedLine)
+					updated = true
+					break
+				}
 			}
 		}
 		if !updated {

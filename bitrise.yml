@@ -36,17 +36,47 @@ workflows:
     - path::./:
         inputs:
         - build_gradle_path: "./app/build.gradle"
-        - new_version_code: "2"
         - new_version_name: "2.0"
+        - new_version_code: "2"
         - version_code_offset: ""
     - script:
         title: Output test
         is_always_run: true
         inputs:
         - content: |-
-            #!/bin/bash
-            echo "ANDROID_VERSION_NAME": ${ANDROID_VERSION_NAME}"
-            echo "ANDROID_VERSION_CODE": ${ANDROID_VERSION_CODE}"
+            #!/usr/bin/env bash
+            set -x
+            if [[ "${ANDROID_VERSION_NAME}" != "2.0" ]]; then
+                echo "Invalid ANDROID_VERSION_NAME, should be: 2.0"
+                exit 1
+            fi
+
+            if (( ${ANDROID_VERSION_CODE} != 2 )); then
+                echo "Invalid ANDROID_VERSION_CODE, should be: 2"
+                exit 1
+            fi
+    - path::./:
+        inputs:
+        - build_gradle_path: "./app/build.gradle"
+        - new_version_name: "4.0"
+        - new_version_code: "3"
+        - version_code_offset: "1"
+    - script:
+        title: Output test
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -x
+            if [[ "${ANDROID_VERSION_NAME}" != "4.0" ]]; then
+                echo "Invalid ANDROID_VERSION_NAME, should be: 4.0"
+                exit 1
+            fi
+
+            if (( ${ANDROID_VERSION_CODE} != 4 )); then
+                echo "Invalid ANDROID_VERSION_CODE, should be: 4"
+                exit 1
+            fi
 
   go-tests:
     before_run:

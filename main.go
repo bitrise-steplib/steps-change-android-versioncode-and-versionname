@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strconv"
 
 	"bufio"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"fmt"
 
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-tools/go-steputils/input"
@@ -20,6 +22,15 @@ func logFail(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+func exportOutput(outputs map[string]string) {
+	for envKey, envValue := range outputs {
+		cmd := command.New("envman", "add", "--key", envKey, "--value", envValue)
+		if err := cmd.Run(); err != nil {
+			logFail("Failed to export %s env: %s", envKey, err)
+		}
+	}
+}
+
 func main() {
 	// inputs
 	buildGradlePth := os.Getenv("build_gradle_path")
@@ -27,11 +38,19 @@ func main() {
 		logFail("Issue with input build_gradle_path - %s", err)
 	}
 
-	newVersionCode := os.Getenv("new_version_code")
+	versionCodeOffset := os.Getenv("version_code_offset")
 	newVersionName := os.Getenv("new_version_name")
+	newVersionCode := os.Getenv("new_version_code")
+
+	if versionCodeOffsetInt, err1 := strconv.ParseInt(versionCodeOffset, 10, 32); err1 == nil {
+		if newVersionCodeInt, err2 := strconv.ParseInt(newVersionCode, 10, 32); err2 == nil {
+			newVersionCode = fmt.Sprintf("%v", newVersionCodeInt+versionCodeOffsetInt)
+		}
+	}
 
 	log.Infof("Configs:")
 	log.Printf("- build_gradle_path: %s", buildGradlePth)
+	log.Printf("- version_code_offset: %s", versionCodeOffset)
 	log.Printf("- new_version_code: %s", newVersionCode)
 	log.Printf("- new_version_name: %s", newVersionName)
 	// ---
@@ -60,14 +79,20 @@ func main() {
 	fmt.Println()
 	log.Infof("Updating build.gradle file")
 
+	finalVersionCode := ""
+	finalVersionName := ""
+
 	for scanner.Scan() {
 		lineNum++
 
 		line := scanner.Text()
 
-		if newVersionCode != "" {
-			if match := versionCodeRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
-				oldVersionCode := match[1]
+		if match := versionCodeRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+			oldVersionCode := match[1]
+			finalVersionCode = oldVersionCode
+
+			if newVersionCode != "" {
+				finalVersionCode = newVersionCode
 
 				updatedLine := strings.Replace(line, oldVersionCode, newVersionCode, -1)
 				updatedVersionCodeNum++
@@ -75,13 +100,17 @@ func main() {
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 
 				updatedLines = append(updatedLines, updatedLine)
-				continue
 			}
+
+			continue
 		}
 
-		if newVersionName != "" {
-			if match := versionNameRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
-				oldVersionName := match[1]
+		if match := versionNameRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+			oldVersionName := match[1]
+			finalVersionName = oldVersionName
+
+			if newVersionName != "" {
+				finalVersionName = newVersionName
 
 				updatedLine := strings.Replace(line, oldVersionName, newVersionName, -1)
 				updatedVersionNameNum++
@@ -89,8 +118,9 @@ func main() {
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 
 				updatedLines = append(updatedLines, updatedLine)
-				continue
 			}
+
+			continue
 		}
 
 		updatedLines = append(updatedLines, line)
@@ -99,6 +129,11 @@ func main() {
 		logFail("Failed to scann build.gradle file, error: %s", err)
 	}
 	// ---
+
+	defer exportOutput(map[string]string{
+		"ANDROID_VERSION_NAME": finalVersionName,
+		"ANDROID_VERSION_CODE": finalVersionCode,
+	})
 
 	fmt.Println()
 	log.Donef("%d versionCode updated", updatedVersionCodeNum)

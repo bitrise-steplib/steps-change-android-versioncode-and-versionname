@@ -17,63 +17,85 @@ workflows:
     - go-tests
     steps:
     - script:
+        title: remove _tmp dir
         inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            rm -rf ./_tmp
+        - content: rm -rf ./_tmp
     - change-workdir:
+        title: cd to _tmp dir
         run_if: true
         inputs:
         - path: ./_tmp
         - is_create_path: true
     - script:
+        title: clone sample app
         inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            git clone -b master $SAMPLE_APP_REPOSITORY_URL ./
+        - content: git clone -b master $SAMPLE_APP_REPOSITORY_URL ./
     - path::./:
+        title: step test
         inputs:
         - build_gradle_path: "./app/build.gradle"
-        - new_version_code: "2"
         - new_version_name: "2.0"
+        - new_version_code: "2"
         - version_code_offset: ""
     - script:
-        title: Output test
+        title: output test
         is_always_run: true
         inputs:
         - content: |-
-            #!/bin/bash
-            echo "ANDROID_VERSION_NAME": ${ANDROID_VERSION_NAME}"
-            echo "ANDROID_VERSION_CODE": ${ANDROID_VERSION_CODE}"
+            #!/usr/bin/env bash
+            set -x
+            if [[ "${ANDROID_VERSION_NAME}" != "2.0" ]]; then
+                echo "Invalid ANDROID_VERSION_NAME, should be: 2.0"
+                exit 1
+            elif (( ${ANDROID_VERSION_CODE} != 2 )); then
+                echo "Invalid ANDROID_VERSION_CODE, should be: 2"
+                exit 1
+            fi
+    - path::./:
+        title: step test - offset
+        inputs:
+        - build_gradle_path: "./app/build.gradle"
+        - new_version_name: "4.0"
+        - new_version_code: "3"
+        - version_code_offset: "1"
+    - script:
+        title: output test
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -x
+
+            if [[ "${ANDROID_VERSION_NAME}" != "4.0" ]]; then
+                echo "Invalid ANDROID_VERSION_NAME, should be: 4.0"
+                exit 1
+            elif (( ${ANDROID_VERSION_CODE} != 4 )); then
+                echo "Invalid ANDROID_VERSION_CODE, should be: 4"
+                exit 1
+            fi
 
   go-tests:
     before_run:
     - _install-test-tools
     steps:
     - script:
-        title: Export go files to test
+        title: export go files to test
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/usr/bin/env bash
             set -ex
 
             no_vendor_paths="$(go list ./... | grep -v vendor)"
             envman add --key GOLIST_WITHOUT_VENDOR --value "$no_vendor_paths"
     - script:
-        title: Err check
+        title: err check
         inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            errcheck -asserts=true -blank=true $GOLIST_WITHOUT_VENDOR
+        - content: errcheck -asserts=true -blank=true $GOLIST_WITHOUT_VENDOR
     - script:
-        title: Go lint
+        title: go lint
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/usr/bin/env bash
             set -ex
 
             while read -r line; do
@@ -86,21 +108,17 @@ workflows:
               fi
             done <<< "$GOLIST_WITHOUT_VENDOR"
     - script:
-        title: Go test
+        title: go test
         inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            go test ./...
+        - content: go test ./...
 
   _install-test-tools:
     steps:
     - script:
-        title: Install required testing tools
+        title: install required testing tools
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/usr/bin/env bash
             set -ex
 
             # Check for unhandled errors
@@ -111,52 +129,39 @@ workflows:
 
   # ----------------------------------------------------------------
   # --- Utility workflows
-  godeps-update:
-    title: Godeps update
-    description: |
-      Used for updating bitrise dependencies with godep
+  dep-update:
     steps:
     - script:
-        title: Dependency update
+        title: dep update
         inputs:
-        - content: |
+        - content: |-
             #!/bin/bash
             set -ex
-            go get -u -v github.com/tools/godep
-
-            go get -u -v github.com/davecgh/go-spew/spew
-            go get -u -v github.com/pmezard/go-difflib/difflib
-
-            rm -rf ./Godeps
-            rm -rf ./vendor
-
-            go get -t -d ./...
-            godep save ./...
+            go get -u -v github.com/golang/dep/cmd/dep
+            dep ensure -v
+            dep ensure -v -update
 
   # ----------------------------------------------------------------
   # --- workflow to create Release version
   create-release:
     steps:
     - script:
-        title:
+        title: create release
         inputs:
         - content: |
-            #!/bin/bash
+            #!/usr/bin/env bash
             set -ex
             go get -u github.com/bitrise-tools/releaseman
-            export CI=true
-            releaseman create --version "$RELEASE_VERSION"
+            CI=true releaseman create --version "$RELEASE_VERSION"
 
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library
   audit-this-step:
     steps:
     - script:
+        title: audit step.yml
         inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            stepman audit --step-yml ./step.yml
+        - content: stepman audit --step-yml ./step.yml
 
   share-this-step:
     envs:
@@ -190,9 +195,10 @@ workflows:
     - audit-this-step
     steps:
     - script:
+        title: share the step
         inputs:
         - content: |-
-            #!/bin/bash
+            #!/usr/bin/env bash
             set -ex
             bitrise share start -c "${MY_STEPLIB_REPO_FORK_GIT_URL}"
             bitrise share create --stepid "${BITRISE_STEP_ID}" --tag "${BITRISE_STEP_VERSION}" --git "${BITRISE_STEP_GIT_CLONE_URL}"

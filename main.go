@@ -1,15 +1,14 @@
 package main
 
 import (
-	"os"
-	"strconv"
-
 	"bufio"
-	"strings"
-
-	"regexp"
-
+	"errors"
 	"fmt"
+	"io"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
@@ -17,131 +16,170 @@ import (
 	"github.com/bitrise-tools/go-steputils/input"
 )
 
+// ConfigsModel ...
+type ConfigsModel struct {
+	BuildGradlePth    string
+	NewVersionName    string
+	NewVersionCode    string
+	VersionCodeOffset string
+}
+
+func createConfigsModelFromEnvs() ConfigsModel {
+	return ConfigsModel{
+		BuildGradlePth:    os.Getenv("build_gradle_path"),
+		NewVersionName:    os.Getenv("new_version_name"),
+		NewVersionCode:    os.Getenv("new_version_code"),
+		VersionCodeOffset: os.Getenv("version_code_offset"),
+	}
+}
+
+func (configs ConfigsModel) print() {
+	log.Infof("Configs:")
+	log.Printf("- BuildGradlePth: %s", configs.BuildGradlePth)
+	log.Printf("- NewVersionName: %s", configs.NewVersionName)
+	log.Printf("- NewVersionCode: %s", configs.NewVersionCode)
+	log.Printf("- VersionCodeOffset: %s", configs.VersionCodeOffset)
+}
+
+func (configs ConfigsModel) validate() error {
+	if err := input.ValidateIfPathExists(configs.BuildGradlePth); err != nil {
+		return errors.New("issue with input BuildGradlePth: " + err.Error())
+	}
+	return nil
+}
+
+type updateFn func(line string, lineNum int, matches []string) string
+
+func findAndUpdate(reader io.Reader, update map[*regexp.Regexp]updateFn) (string, error) {
+	scanner := bufio.NewScanner(reader)
+	var updatedLines []string
+
+	for lineNum := 0; scanner.Scan(); lineNum++ {
+		line := scanner.Text()
+
+		updated := false
+		for re, fn := range update {
+			if match := re.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+				if updatedLine := fn(line, lineNum, match); updatedLine != "" {
+					updatedLines = append(updatedLines, updatedLine)
+					updated = true
+					break
+				}
+			}
+		}
+		if !updated {
+			updatedLines = append(updatedLines, line)
+		}
+	}
+
+	return strings.Join(updatedLines, "\n"), scanner.Err()
+}
+
+func exportOutputs(outputs map[string]string) error {
+	for envKey, envValue := range outputs {
+		cmd := command.New("envman", "add", "--key", envKey, "--value", envValue)
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func logFail(format string, v ...interface{}) {
 	log.Errorf(format, v...)
 	os.Exit(1)
 }
 
-func exportOutput(outputs map[string]string) {
-	for envKey, envValue := range outputs {
-		cmd := command.New("envman", "add", "--key", envKey, "--value", envValue)
-		if err := cmd.Run(); err != nil {
-			logFail("Failed to export %s env: %s", envKey, err)
-		}
-	}
-}
-
 func main() {
-	// inputs
-	buildGradlePth := os.Getenv("build_gradle_path")
-	if err := input.ValidateIfPathExists(buildGradlePth); err != nil {
-		logFail("Issue with input build_gradle_path - %s", err)
+	//
+	// validate and prepare inputs
+	configs := createConfigsModelFromEnvs()
+
+	fmt.Println()
+	configs.print()
+
+	if err := configs.validate(); err != nil {
+		logFail("Issue with input: %s", err)
 	}
 
-	versionCodeOffset := os.Getenv("version_code_offset")
-	newVersionName := os.Getenv("new_version_name")
-	newVersionCode := os.Getenv("new_version_code")
-
-	if versionCodeOffsetInt, err1 := strconv.ParseInt(versionCodeOffset, 10, 32); err1 == nil {
-		if newVersionCodeInt, err2 := strconv.ParseInt(newVersionCode, 10, 32); err2 == nil {
-			newVersionCode = fmt.Sprintf("%v", newVersionCodeInt+versionCodeOffsetInt)
+	var newVersionCode int
+	if configs.NewVersionCode != "" {
+		var err error
+		newVersionCode, err = strconv.Atoi(configs.NewVersionCode)
+		if err != nil {
+			logFail("Failed to convert to string: %s, error: %s", configs.NewVersionCode, err)
 		}
 	}
 
-	log.Infof("Configs:")
-	log.Printf("- build_gradle_path: %s", buildGradlePth)
-	log.Printf("- version_code_offset: %s", versionCodeOffset)
-	log.Printf("- new_version_code: %s", newVersionCode)
-	log.Printf("- new_version_name: %s", newVersionName)
-	// ---
+	if configs.VersionCodeOffset != "" {
+		offset, err := strconv.Atoi(configs.VersionCodeOffset)
+		if err != nil {
+			logFail("Failed to convert to string: %s, error: %s", configs.VersionCodeOffset, err)
+		}
+		newVersionCode += offset
+	}
 
 	//
 	// find versionName & versionCode with regexp
-	buildGradleContent, err := fileutil.ReadStringFromFile(buildGradlePth)
+	fmt.Println()
+	log.Infof("Updating versionName and versionCode in: %s", configs.BuildGradlePth)
+
+	f, err := os.Open(configs.BuildGradlePth)
 	if err != nil {
 		logFail("Failed to read build.gradle file, error: %s", err)
 	}
 
-	versionCodePattern := `^versionCode (?P<version_code>.*)`
-	versionCodeRegexp := regexp.MustCompile(versionCodePattern)
+	var finalVersionCode, finalVersionName string
+	var updatedVersionCodes, updatedVersionNames int
 
-	versionNamePattern := `^versionName "(?P<version_code>.*)"`
-	versionNameRegexp := regexp.MustCompile(versionNamePattern)
-
-	updatedLines := []string{}
-	updatedVersionCodeNum := 0
-	updatedVersionNameNum := 0
-
-	reader := strings.NewReader(buildGradleContent)
-	scanner := bufio.NewScanner(reader)
-	lineNum := 0
-
-	fmt.Println()
-	log.Infof("Updating build.gradle file")
-
-	finalVersionCode := ""
-	finalVersionName := ""
-
-	for scanner.Scan() {
-		lineNum++
-
-		line := scanner.Text()
-
-		if match := versionCodeRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+	updatedBuildGradleContent, err := findAndUpdate(f, map[*regexp.Regexp]updateFn{
+		regexp.MustCompile(`^versionCode (?P<version_code>.*)`): func(line string, lineNum int, match []string) string {
 			oldVersionCode := match[1]
 			finalVersionCode = oldVersionCode
+			updatedLine := ""
 
-			if newVersionCode != "" {
-				finalVersionCode = newVersionCode
-
-				updatedLine := strings.Replace(line, oldVersionCode, newVersionCode, -1)
-				updatedVersionCodeNum++
-
+			if configs.NewVersionCode != "" {
+				finalVersionCode = strconv.Itoa(newVersionCode)
+				updatedLine = strings.Replace(line, oldVersionCode, finalVersionCode, -1)
+				updatedVersionCodes++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
-
-				updatedLines = append(updatedLines, updatedLine)
 			}
 
-			continue
-		}
-
-		if match := versionNameRegexp.FindStringSubmatch(strings.TrimSpace(line)); len(match) == 2 {
+			return updatedLine
+		},
+		regexp.MustCompile(`^versionName "(?P<version_code>.*)"`): func(line string, lineNum int, match []string) string {
 			oldVersionName := match[1]
 			finalVersionName = oldVersionName
+			updatedLine := ""
 
-			if newVersionName != "" {
-				finalVersionName = newVersionName
-
-				updatedLine := strings.Replace(line, oldVersionName, newVersionName, -1)
-				updatedVersionNameNum++
-
+			if configs.NewVersionName != "" {
+				finalVersionName = configs.NewVersionName
+				updatedLine = strings.Replace(line, oldVersionName, finalVersionName, -1)
+				updatedVersionNames++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
-
-				updatedLines = append(updatedLines, updatedLine)
 			}
 
-			continue
-		}
-
-		updatedLines = append(updatedLines, line)
-	}
-	if err := scanner.Err(); err != nil {
+			return updatedLine
+		},
+	})
+	if err != nil {
 		logFail("Failed to scann build.gradle file, error: %s", err)
 	}
-	// ---
 
-	defer exportOutput(map[string]string{
+	//
+	// export outputs
+	if err := exportOutputs(map[string]string{
 		"ANDROID_VERSION_NAME": finalVersionName,
 		"ANDROID_VERSION_CODE": finalVersionCode,
-	})
+	}); err != nil {
+		logFail("Failed to export outputs, error: %s", err)
+	}
 
-	fmt.Println()
-	log.Donef("%d versionCode updated", updatedVersionCodeNum)
-	log.Donef("%d versionName updated", updatedVersionNameNum)
-
-	updatedBuildGradleContent := strings.Join(updatedLines, "\n")
-
-	if err := fileutil.WriteStringToFile(buildGradlePth, updatedBuildGradleContent); err != nil {
+	if err := fileutil.WriteStringToFile(configs.BuildGradlePth, updatedBuildGradleContent); err != nil {
 		logFail("Failed to write build.gradle file, error: %s", err)
 	}
+
+	fmt.Println()
+	log.Donef("%d versionCode updated", updatedVersionCodes)
+	log.Donef("%d versionName updated", updatedVersionNames)
 }

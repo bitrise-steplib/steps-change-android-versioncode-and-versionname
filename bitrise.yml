@@ -3,7 +3,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - BITRISE_STEP_VERSION: "0.9.0"
+  - BITRISE_STEP_VERSION: "1.0.0"
   - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
 
   - SAMPLE_APP_REPOSITORY_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
@@ -152,7 +152,7 @@ workflows:
             #!/usr/bin/env bash
             set -ex
             go get -u github.com/bitrise-tools/releaseman
-            CI=true releaseman create --version "$RELEASE_VERSION"
+            CI=true releaseman create --version "$BITRISE_STEP_VERSION"
 
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library

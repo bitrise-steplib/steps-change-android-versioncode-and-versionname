@@ -25,7 +25,7 @@ toolkit:
     package_name: github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 
 inputs:
-  - build_gradle_path:
+  - build_gradle_path: $BITRISE_SOURCE_DIR/app/build.gradle
     opts:
       title: Path to the build.gradle file
       summary: Path to the build.gradle file shows the versionCode and versionName settings.
@@ -33,24 +33,50 @@ inputs:
   - new_version_name:
     opts:
       title: New versionName
-      summary: New versionName to set.
+      summary: |-
+        New versionName to set.
+
+        For example: 1.0.0
+        
+        Leave this input empty to do not modify versionName.
       description: |-
         New versionName to set.
+
+        For example: 1.0.0
+        
         Leave this input empty to do not modify versionName.
-  - new_version_code:
+  - new_version_code: $BITRISE_BUILD_NUMBER
     opts:
       title: New versionCode
-      summary: New versionCode to set.
+      summary: |-
+        New versionCode to set.
+
+        For example: 1
+        
+        Leave this input empty to do not modify versionCode. 
       description: |-
         New versionCode to set.
-        Leave this input empty to do not modify versionCode.
+
+        For example: 1
+        
+        Leave this input empty to do not modify versionCode. 
   - version_code_offset:
     opts:
       title: versionCode Offset
-      summary: Offset value for versionCode.
+      summary: |-
+        Offset value for versionCode.
+
+        For example: 1
+
+        Leave empty if you want the exact value you set in
+        `New versionCode` input otherwise it will be added to it.
       description: |-
         Offset value for versionCode.
-        Leave this input empty to do not modify versionCode.
+
+        For example: 1
+
+        Leave empty if you want the exact value you set in
+        `New versionCode` input otherwise it will be added to it.
 outputs:
   - ANDROID_VERSION_NAME:
     opts:

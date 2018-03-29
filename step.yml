@@ -68,16 +68,14 @@ inputs:
 
         For example: 1
 
-        Leave this input empty to do not modify versionCode.
-        Also leave empty if you want the exact value you set in
+        Leave empty if you want the exact value you set in
         `New versionCode` input otherwise it will be added to it.
       description: |-
         Offset value for versionCode.
 
         For example: 1
 
-        Leave this input empty to do not modify versionCode.
-        Also leave empty if you want the exact value you set in
+        Leave empty if you want the exact value you set in
         `New versionCode` input otherwise it will be added to it.
 outputs:
   - ANDROID_VERSION_NAME:

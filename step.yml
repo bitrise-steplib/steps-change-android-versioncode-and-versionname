@@ -25,7 +25,7 @@ toolkit:
     package_name: github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 
 inputs:
-  - build_gradle_path: ./app/build.gradle
+  - build_gradle_path: $BITRISE_SOURCE_DIR/app/build.gradle
     opts:
       title: Path to the build.gradle file
       summary: Path to the build.gradle file shows the versionCode and versionName settings.

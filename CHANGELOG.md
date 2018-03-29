@@ -1,6 +1,10 @@
-## Changelog (Current version: 1.0.0)
+## Changelog (Current version: 1.0.1)
 
 -----------------
+
+### 1.0.1 (2018 Mar 29)
+* [e8fd051] Prepare for 1.0.1
+* [4a8d8da] Updated step.yml (#7)
 
 ### 1.0.0 (2018 Jan 24)
 * [3243d6f] prepare for 1.0.0
@@ -12,4 +16,4 @@
 
 -----------------
 
-Updated: 2018 Jan 24
+Updated: 2018 Mar 29

@@ -102,6 +102,10 @@ func main() {
 		logFail("Issue with input: %s", err)
 	}
 
+	if len(configs.NewVersionCode) < 1 && len(configs.NewVersionName) < 1 {
+		logFail("Issue with input: %s", fmt.Errorf("neither NewVersionCode or NewVersionName are provided"))
+	}
+
 	var newVersionCode int
 	if configs.NewVersionCode != "" {
 		var err error

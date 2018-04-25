@@ -45,6 +45,15 @@ func (configs ConfigsModel) validate() error {
 	if err := input.ValidateIfPathExists(configs.BuildGradlePth); err != nil {
 		return errors.New("issue with input BuildGradlePth: " + err.Error())
 	}
+
+	if err := input.ValidateIfNotEmpty(configs.NewVersionCode); err != nil {
+		return errors.New("issue with input NewVersionCode: " + err.Error())
+	}
+
+	if err := input.ValidateIfNotEmpty(configs.NewVersionName); err != nil {
+		return errors.New("issue with input NewVersionName: " + err.Error())
+	}
+
 	return nil
 }
 
@@ -100,10 +109,6 @@ func main() {
 
 	if err := configs.validate(); err != nil {
 		logFail("Issue with input: %s", err)
-	}
-
-	if len(configs.NewVersionCode) < 1 && len(configs.NewVersionName) < 1 {
-		logFail("Issue with input: %s", fmt.Errorf("neither NewVersionCode or NewVersionName are provided"))
 	}
 
 	var newVersionCode int

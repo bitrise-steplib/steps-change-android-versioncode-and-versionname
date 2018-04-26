@@ -45,6 +45,13 @@ func (configs ConfigsModel) validate() error {
 	if err := input.ValidateIfPathExists(configs.BuildGradlePth); err != nil {
 		return errors.New("issue with input BuildGradlePth: " + err.Error())
 	}
+
+	if err := input.ValidateIfNotEmpty(configs.NewVersionCode); err != nil {
+		if err := input.ValidateIfNotEmpty(configs.NewVersionName); err != nil {
+			return errors.New("neither NewVersionCode nor NewVersionName are provided however, one of them is required")
+		}
+	}
+
 	return nil
 }
 

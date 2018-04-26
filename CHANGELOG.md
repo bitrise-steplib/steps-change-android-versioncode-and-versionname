@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.0.1)
+## Changelog (Current version: 1.1.0)
 
 -----------------
+
+### 1.1.0 (2018 Apr 26)
+* [cc603ae] Prepare for 1.0.0
+* [f8de0b7] If neither NewVersionCode or NewVersionName are provided the step will fail (#8)
+* [f364d4d] removed unused file
 
 ### 1.0.1 (2018 Mar 29)
 * [e8fd051] Prepare for 1.0.1
@@ -16,4 +21,4 @@
 
 -----------------
 
-Updated: 2018 Mar 29
+Updated: 2018 Apr 26

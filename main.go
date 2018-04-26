@@ -48,7 +48,7 @@ func (configs ConfigsModel) validate() error {
 
 	if err := input.ValidateIfNotEmpty(configs.NewVersionCode); err != nil {
 		if err := input.ValidateIfNotEmpty(configs.NewVersionName); err != nil {
-			return errors.New("neither NewVersionCode nor NewVersionName are provided. One of them is required")
+			return errors.New("neither NewVersionCode nor NewVersionName are provided however, one of them is required")
 		}
 	}
 

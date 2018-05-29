@@ -154,7 +154,7 @@ func main() {
 
 			return updatedLine
 		},
-		regexp.MustCompile(`^versionName "(?P<version_code>.*)"`): func(line string, lineNum int, match []string) string {
+		regexp.MustCompile(`^versionName (?:"|')(?P<version_code>.*)(?:"|')`): func(line string, lineNum int, match []string) string {
 			oldVersionName := match[1]
 			finalVersionName = oldVersionName
 			updatedLine := ""

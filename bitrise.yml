@@ -1,9 +1,9 @@
-format_version: 3
+format_version: 5
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - BITRISE_STEP_VERSION: "1.1.0"
+  - BITRISE_STEP_VERSION: "1.1.1"
   - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
 
   - SAMPLE_APP_REPOSITORY_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git

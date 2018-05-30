@@ -1,6 +1,10 @@
-## Changelog (Current version: 1.1.0)
+## Changelog (Current version: 1.1.1)
 
 -----------------
+
+### 1.1.1 (2018 May 30)
+* [9edcac1] Prepare for 1.1.1
+* [3749bac] versionName regex fix (#10)
 
 ### 1.1.0 (2018 Apr 26)
 * [cc603ae] Prepare for 1.0.0
@@ -21,4 +25,4 @@
 
 -----------------
 
-Updated: 2018 Apr 26
+Updated: 2018 May 30

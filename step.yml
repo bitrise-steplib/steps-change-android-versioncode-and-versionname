@@ -1,9 +1,9 @@
 title: Change Android versionCode and versionName
 summary: Change Android versionCode and versionName in build.gradle file.
 description: Change your Android project's versionCode and versionName in build.gradle file.
-website: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
-source_code_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
-support_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
+website: https://github.com/bitrise-steplib/steps-change-android-versioncode-and-versionname
+source_code_url: https://github.com/bitrise-steplib/steps-change-android-versioncode-and-versionname
+support_url: https://github.com/bitrise-steplib/steps-change-android-versioncode-and-versionname
 host_os_tags:
   - osx-10.10
   - ubuntu-16.04
@@ -12,6 +12,7 @@ project_type_tags:
   - react-native
   - cordova
   - ionic
+  - flutter
 type_tags:
   - utility
 
@@ -22,7 +23,7 @@ run_if: ""
 
 toolkit:
   go:
-    package_name: github.com/bitrise-community/steps-change-android-versioncode-and-versionname
+    package_name: github.com/bitrise-steplib/steps-change-android-versioncode-and-versionname
 
 inputs:
   - build_gradle_path: $BITRISE_SOURCE_DIR/app/build.gradle

@@ -18,9 +18,9 @@ import (
 
 const (
 	// versionCode — A positive integer [...] -> https://developer.android.com/studio/publish/versioning
-	versionCodeRegexPattern = `^versionCode (?P<version_code>.*)`
+	versionCodeRegexPattern = `^versionCode (\d*)`
 	// versionName — A string used as the version number shown to users [...] -> https://developer.android.com/studio/publish/versioning
-	versionNameRegexPattern = `^versionName (?:"|')(?P<version_code>.*)(?:"|')`
+	versionNameRegexPattern = `^versionName (?:"|')(.*)(?:"|')`
 )
 
 // ConfigsModel ...

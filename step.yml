@@ -38,13 +38,13 @@ inputs:
 
         For example: 1.0.0
         
-        Leave this input empty to do not modify versionName.
+        Leave this input empty so that versionName remains unchanged.
       description: |-
         New versionName to set.
 
         For example: 1.0.0
         
-        Leave this input empty to do not modify versionName.
+        Leave this input empty so that versionName remains unchanged.
   - new_version_code: $BITRISE_BUILD_NUMBER
     opts:
       title: New versionCode
@@ -59,7 +59,7 @@ inputs:
 
         For example: 1
         
-        Leave this input empty to do not modify versionCode. 
+        Leave this input empty so that versionCode remains unchanged. 
   - version_code_offset:
     opts:
       title: versionCode Offset
@@ -68,14 +68,14 @@ inputs:
 
         For example: 1
 
-        Leave empty if you want the exact value you set in
+        Leave this input empty if you want the exact value you set in
         `New versionCode` input otherwise it will be added to it.
       description: |-
         Offset value for versionCode.
 
         For example: 1
 
-        Leave empty if you want the exact value you set in
+        Leave this input empty if you want the exact value you set in
         `New versionCode` input otherwise it will be added to it.
 outputs:
   - ANDROID_VERSION_NAME:

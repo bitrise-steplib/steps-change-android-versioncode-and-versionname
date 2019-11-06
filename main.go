@@ -16,6 +16,13 @@ import (
 	"github.com/bitrise-tools/go-steputils/input"
 )
 
+const (
+	// versionCode — A positive integer [...] -> https://developer.android.com/studio/publish/versioning
+	versionCodeRegexPattern = `^versionCode (?P<version_code>.*)`
+	// versionName — A string used as the version number shown to users [...] -> https://developer.android.com/studio/publish/versioning
+	versionNameRegexPattern = `^versionName (?:"|')(?P<version_code>.*)(?:"|')`
+)
+
 // ConfigsModel ...
 type ConfigsModel struct {
 	BuildGradlePth    string
@@ -140,7 +147,7 @@ func main() {
 	var updatedVersionCodes, updatedVersionNames int
 
 	updatedBuildGradleContent, err := findAndUpdate(f, map[*regexp.Regexp]updateFn{
-		regexp.MustCompile(`^versionCode (?P<version_code>.*)`): func(line string, lineNum int, match []string) string {
+		regexp.MustCompile(versionCodeRegexPattern): func(line string, lineNum int, match []string) string {
 			oldVersionCode := match[1]
 			finalVersionCode = oldVersionCode
 			updatedLine := ""
@@ -154,7 +161,7 @@ func main() {
 
 			return updatedLine
 		},
-		regexp.MustCompile(`^versionName (?:"|')(?P<version_code>.*)(?:"|')`): func(line string, lineNum int, match []string) string {
+		regexp.MustCompile(versionNameRegexPattern): func(line string, lineNum int, match []string) string {
 			oldVersionName := match[1]
 			finalVersionName = oldVersionName
 			updatedLine := ""

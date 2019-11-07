@@ -2,64 +2,30 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 
+	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-tools/go-steputils/input"
 )
 
 const (
 	// versionCode — A positive integer [...] -> https://developer.android.com/studio/publish/versioning
-	versionCodeRegexPattern = `^versionCode (\d*)`
+	versionCodeRegexPattern = `^versionCode(?:\s|=)*(.*?)(?:\s|\/\/|$)`
 	// versionName — A string used as the version number shown to users [...] -> https://developer.android.com/studio/publish/versioning
-	versionNameRegexPattern = `^versionName (?:"|')(.*)(?:"|')`
+	versionNameRegexPattern = `^versionName(?:=|'|"|\s)+(.*?)(?:'|"|\s|\/\/|$)`
 )
 
-// ConfigsModel ...
-type ConfigsModel struct {
-	BuildGradlePth    string
-	NewVersionName    string
-	NewVersionCode    string
-	VersionCodeOffset string
-}
-
-func createConfigsModelFromEnvs() ConfigsModel {
-	return ConfigsModel{
-		BuildGradlePth:    os.Getenv("build_gradle_path"),
-		NewVersionName:    os.Getenv("new_version_name"),
-		NewVersionCode:    os.Getenv("new_version_code"),
-		VersionCodeOffset: os.Getenv("version_code_offset"),
-	}
-}
-
-func (configs ConfigsModel) print() {
-	log.Infof("Configs:")
-	log.Printf("- BuildGradlePth: %s", configs.BuildGradlePth)
-	log.Printf("- NewVersionName: %s", configs.NewVersionName)
-	log.Printf("- NewVersionCode: %s", configs.NewVersionCode)
-	log.Printf("- VersionCodeOffset: %s", configs.VersionCodeOffset)
-}
-
-func (configs ConfigsModel) validate() error {
-	if err := input.ValidateIfPathExists(configs.BuildGradlePth); err != nil {
-		return errors.New("issue with input BuildGradlePth: " + err.Error())
-	}
-
-	if err := input.ValidateIfNotEmpty(configs.NewVersionCode); err != nil {
-		if err := input.ValidateIfNotEmpty(configs.NewVersionName); err != nil {
-			return errors.New("neither NewVersionCode nor NewVersionName are provided however, one of them is required")
-		}
-	}
-
-	return nil
+type config struct {
+	BuildGradlePth    string  `env:"build_gradle_path,file"`
+	NewVersionName    *string `env:"new_version_name"`
+	NewVersionCode    *int    `env:"new_version_code"`
+	VersionCodeOffset int     `env:"version_code_offset"`
 }
 
 type updateFn func(line string, lineNum int, matches []string) string
@@ -99,48 +65,27 @@ func exportOutputs(outputs map[string]string) error {
 	return nil
 }
 
-func logFail(format string, v ...interface{}) {
+func failf(format string, v ...interface{}) {
 	log.Errorf(format, v...)
 	os.Exit(1)
 }
 
 func main() {
-	//
-	// validate and prepare inputs
-	configs := createConfigsModelFromEnvs()
-
+	var cfg config
+	if err := stepconf.Parse(&cfg); err != nil {
+		failf("Issue with input: %s", err)
+	}
+	stepconf.Print(cfg)
 	fmt.Println()
-	configs.print()
-
-	if err := configs.validate(); err != nil {
-		logFail("Issue with input: %s", err)
-	}
-
-	var newVersionCode int
-	if configs.NewVersionCode != "" {
-		var err error
-		newVersionCode, err = strconv.Atoi(configs.NewVersionCode)
-		if err != nil {
-			logFail("Failed to convert to string: %s, error: %s", configs.NewVersionCode, err)
-		}
-	}
-
-	if configs.VersionCodeOffset != "" {
-		offset, err := strconv.Atoi(configs.VersionCodeOffset)
-		if err != nil {
-			logFail("Failed to convert to string: %s, error: %s", configs.VersionCodeOffset, err)
-		}
-		newVersionCode += offset
-	}
 
 	//
 	// find versionName & versionCode with regexp
 	fmt.Println()
-	log.Infof("Updating versionName and versionCode in: %s", configs.BuildGradlePth)
+	log.Infof("Updating versionName and versionCode in: %s", cfg.BuildGradlePth)
 
-	f, err := os.Open(configs.BuildGradlePth)
+	f, err := os.Open(cfg.BuildGradlePth)
 	if err != nil {
-		logFail("Failed to read build.gradle file, error: %s", err)
+		failf("Failed to read build.gradle file, error: %s", err)
 	}
 
 	var finalVersionCode, finalVersionName string
@@ -152,8 +97,8 @@ func main() {
 			finalVersionCode = oldVersionCode
 			updatedLine := ""
 
-			if configs.NewVersionCode != "" {
-				finalVersionCode = strconv.Itoa(newVersionCode)
+			if cfg.NewVersionCode != nil {
+				finalVersionCode = string(*cfg.NewVersionCode + cfg.VersionCodeOffset)
 				updatedLine = strings.Replace(line, oldVersionCode, finalVersionCode, -1)
 				updatedVersionCodes++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
@@ -166,8 +111,8 @@ func main() {
 			finalVersionName = oldVersionName
 			updatedLine := ""
 
-			if configs.NewVersionName != "" {
-				finalVersionName = configs.NewVersionName
+			if cfg.NewVersionName != nil {
+				finalVersionName = *cfg.NewVersionName
 				updatedLine = strings.Replace(line, oldVersionName, finalVersionName, -1)
 				updatedVersionNames++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
@@ -177,7 +122,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		logFail("Failed to scann build.gradle file, error: %s", err)
+		failf("Failed to scann build.gradle file, error: %s", err)
 	}
 
 	//
@@ -186,11 +131,11 @@ func main() {
 		"ANDROID_VERSION_NAME": finalVersionName,
 		"ANDROID_VERSION_CODE": finalVersionCode,
 	}); err != nil {
-		logFail("Failed to export outputs, error: %s", err)
+		failf("Failed to export outputs, error: %s", err)
 	}
 
-	if err := fileutil.WriteStringToFile(configs.BuildGradlePth, updatedBuildGradleContent); err != nil {
-		logFail("Failed to write build.gradle file, error: %s", err)
+	if err := fileutil.WriteStringToFile(cfg.BuildGradlePth, updatedBuildGradleContent); err != nil {
+		failf("Failed to write build.gradle file, error: %s", err)
 	}
 
 	fmt.Println()

@@ -5,36 +5,89 @@ import (
 	"testing"
 )
 
-const (
-	sampleCodeWithoutComments = `versionCode 1`
-	sampleNameWithoutComments = `versionName "1.0"`
+// const (
+// 	sampleCodeWithoutComments =
+// 	sampleNameWithoutComments =
 
-	sampleCodeWithComments = `versionCode 1//close comment`
-	sampleNameWithComments = `versionName "1.0" // far comment`
-)
+// 	sampleCodeWithComments =
+// 	sampleNameWithComments =
+
+// 	sampleCodeWithCommentsAndVar = `versionCode myVar//close comment`
+// 	sampleNameWithCommentsAndVar = `versionName myVar // far comment`
+// )
 
 func Test_regexPatterns(t *testing.T) {
-	tests := []struct {
-		name          string
+	for _, tt := range []struct {
 		sampleContent string
-		regexPattern  string
 		want          string
+		regexPattern  string
 	}{
-		{"versionCode check without comments", sampleCodeWithoutComments, versionCodeRegexPattern, "1"},
-		{"versionName check without comments", sampleNameWithoutComments, versionNameRegexPattern, "1.0"},
-		{"versionCode check with comments", sampleCodeWithComments, versionCodeRegexPattern, "1"},
-		{"versionName check with comments", sampleNameWithComments, versionNameRegexPattern, "1.0"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := regexp.MustCompile(tt.regexPattern).FindStringSubmatch(tt.sampleContent)
-			if len(got) == 0 {
-				t.Errorf("regex(%s) didn't match for content: %s\n\n got: %s", tt.regexPattern, tt.sampleContent, got)
-				return
-			}
-			if got[1] != tt.want {
-				t.Errorf("got: (%v), want: (%v)", got[1], tt.want)
-			}
-		})
+		{`versionCode 1`, "1", versionCodeRegexPattern},
+		{`versionCode 1//close comment`, "1", versionCodeRegexPattern},
+		{`versionCode 1 // far comment`, "1", versionCodeRegexPattern},
+		{`versionCode myWar`, "myWar", versionCodeRegexPattern},
+		{`versionCode myWar//close comment`, "myWar", versionCodeRegexPattern},
+		{`versionCode myWar // far comment`, "myWar", versionCodeRegexPattern},
+
+		{`versionCode = 1`, "1", versionCodeRegexPattern},
+		{`versionCode =1//close comment`, "1", versionCodeRegexPattern},
+		{`versionCode= 1 // far comment`, "1", versionCodeRegexPattern},
+		{`versionCode = myWar`, "myWar", versionCodeRegexPattern},
+		{`versionCode   =  myWar//close comment`, "myWar", versionCodeRegexPattern},
+		{`versionCode  = myWar // far comment`, "myWar", versionCodeRegexPattern},
+
+		{`versionCode 1` + "\n", "1", versionCodeRegexPattern},
+		{`versionCode 1//close comment` + "\n", "1", versionCodeRegexPattern},
+		{`versionCode 1 // far comment` + "\n", "1", versionCodeRegexPattern},
+		{`versionCode myWar` + "\n", "myWar", versionCodeRegexPattern},
+		{`versionCode myWar//close comment` + "\n", "myWar", versionCodeRegexPattern},
+		{`versionCode myWar // far comment` + "\n", "myWar", versionCodeRegexPattern},
+
+		{`versionCode = 1` + "\n", "1", versionCodeRegexPattern},
+		{`versionCode =1//close comment` + "\n", "1", versionCodeRegexPattern},
+		{`versionCode= 1 // far comment` + "\n", "1", versionCodeRegexPattern},
+		{`versionCode = myWar` + "\n", "myWar", versionCodeRegexPattern},
+		{`versionCode   =  myWar//close comment` + "\n", "myWar", versionCodeRegexPattern},
+		{`versionCode  = myWar // far comment` + "\n", "myWar", versionCodeRegexPattern},
+
+		{`versionName "1.0"`, "1.0", versionNameRegexPattern},
+		{`versionName "1.0"//close comment`, "1.0", versionNameRegexPattern},
+		{`versionName "1.0" // far comment`, "1.0", versionNameRegexPattern},
+		{`versionName '1.0'`, "1.0", versionNameRegexPattern},
+		{`versionName '1.0'//close comment`, "1.0", versionNameRegexPattern},
+		{`versionName '1.0' // far comment`, "1.0", versionNameRegexPattern},
+		{`versionName = '1.0' // far comment`, "1.0", versionNameRegexPattern},
+
+		{`versionName myWar`, "myWar", versionNameRegexPattern},
+		{`versionName myWar//close comment`, "myWar", versionNameRegexPattern},
+		{`versionName myWar // far comment`, "myWar", versionNameRegexPattern},
+		{`versionName = myWar // far comment`, "myWar", versionNameRegexPattern},
+
+		{`versionName "1.0"` + "\n", "1.0", versionNameRegexPattern},
+		{`versionName "1.0"//close comment` + "\n", "1.0", versionNameRegexPattern},
+		{`versionName="1.0" // far comment` + "\n", "1.0", versionNameRegexPattern},
+		{`versionName '1.0'` + "\n", "1.0", versionNameRegexPattern},
+		{`versionName '1.0'//close comment` + "\n", "1.0", versionNameRegexPattern},
+		{`versionName '1.0' // far comment` + "\n", "1.0", versionNameRegexPattern},
+		{`versionName = '1.0' // far comment` + "\n", "1.0", versionNameRegexPattern},
+
+		{`versionName myWar` + "\n", "myWar", versionNameRegexPattern},
+		{`versionName myWar//close comment` + "\n", "myWar", versionNameRegexPattern},
+		{`versionName myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
+		{`versionName = myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
+
+		{`versionName myWar` + "\n", "myWar", versionNameRegexPattern},
+		{`versionName myWar//close comment` + "\n", "myWar", versionNameRegexPattern},
+		{`versionName myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
+		{`versionName=myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
+	} {
+		got := regexp.MustCompile(tt.regexPattern).FindStringSubmatch(tt.sampleContent)
+		if len(got) == 0 {
+			t.Errorf("regex(%s) didn't match for content: %s\n\n got: %s", tt.regexPattern, tt.sampleContent, got)
+			return
+		}
+		if got[1] != tt.want {
+			t.Errorf("got: (%v), want: (%v)", got[1], tt.want)
+		}
 	}
 }

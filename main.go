@@ -79,7 +79,7 @@ func main() {
 	fmt.Println()
 
 	if cfg.NewVersionName == nil && cfg.NewVersionCode == nil {
-		failf("Neither NewVersionCode nor NewVersionName are provided however, one of them is required.")
+		failf("Neither NewVersionCode nor NewVersionName are provided, however one of them is required.")
 	}
 
 	//

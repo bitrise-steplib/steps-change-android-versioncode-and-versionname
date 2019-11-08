@@ -43,13 +43,18 @@ func TestSudoNeeded(t *testing.T) {
 		require.Equal(t, false, sudoNeeded(RbenvRuby, "gem", "uninstall", "fastlane"))
 
 		require.Equal(t, false, sudoNeeded(Unkown, "bundle", "install"))
+		require.Equal(t, false, sudoNeeded(Unkown, "bundle", "_2.0.2_", "install"))
 		require.Equal(t, true, sudoNeeded(SystemRuby, "bundle", "install"))
+		require.Equal(t, true, sudoNeeded(SystemRuby, "bundle", "_2.0.2_", "install"))
+		require.Equal(t, false, sudoNeeded(SystemRuby, "bundle", "_2.0.2_"))
 		require.Equal(t, false, sudoNeeded(BrewRuby, "bundle", "install"))
 		require.Equal(t, false, sudoNeeded(RVMRuby, "bundle", "install"))
 		require.Equal(t, false, sudoNeeded(RbenvRuby, "bundle", "install"))
 
 		require.Equal(t, false, sudoNeeded(Unkown, "bundle", "update"))
+		require.Equal(t, false, sudoNeeded(Unkown, "bundle", "_2.0.2_", "update"))
 		require.Equal(t, true, sudoNeeded(SystemRuby, "bundle", "update"))
+		require.Equal(t, true, sudoNeeded(SystemRuby, "bundle", "_2.0.2_", "update"))
 		require.Equal(t, false, sudoNeeded(BrewRuby, "bundle", "update"))
 		require.Equal(t, false, sudoNeeded(RVMRuby, "bundle", "update"))
 		require.Equal(t, false, sudoNeeded(RbenvRuby, "bundle", "update"))
@@ -125,5 +130,66 @@ angularjs-rails (1.5.8)`
 		found, err := findGemInList(gemList, "fastlane", "2.70")
 		require.NoError(t, err)
 		require.Equal(t, false, found)
+	}
+}
+
+func Test_isSpecifiedRbenvRubyInstalled(t *testing.T) {
+
+	t.Log("RBENV_VERSION installed -  2.3.5 (set by RBENV_VERSION environment variable)")
+	{
+		message := "2.3.5 (set by RBENV_VERSION environment variable)"
+		installed, version, err := isSpecifiedRbenvRubyInstalled(message)
+		require.NoError(t, err)
+		require.Equal(t, true, installed)
+		require.Equal(t, "2.3.5", version)
+	}
+
+	t.Log("RBENV_VERSION not installed - rbenv: version `2.34.0' is not installed (set by RBENV_VERSION environment variable)")
+	{
+		message := "rbenv: version `2.34.0' is not installed (set by RBENV_VERSION environment variable)"
+		installed, version, err := isSpecifiedRbenvRubyInstalled(message)
+		require.NoError(t, err)
+		require.Equal(t, false, installed)
+		require.Equal(t, "2.34.0", version)
+	}
+
+	t.Log("Global ruby installed - 2.3.5 (set by /Users/Vagrant/.rbenv/version)")
+	{
+
+		message := "2.3.5 (set by /Users/Vagrant/.rbenv/version)"
+		installed, version, err := isSpecifiedRbenvRubyInstalled(message)
+		require.NoError(t, err)
+		require.Equal(t, true, installed)
+		require.Equal(t, "2.3.5", version)
+	}
+
+	t.Log("Global ruby not installed - rbenv: version `2.4.2' is not installed (set by /Users/Vagrant/.rbenv/version)")
+	{
+
+		message := "rbenv: version `2.4.2' is not installed (set by /Users/Vagrant/.rbenv/version)"
+		installed, version, err := isSpecifiedRbenvRubyInstalled(message)
+		require.NoError(t, err)
+		require.Equal(t, false, installed)
+		require.Equal(t, "2.4.2", version)
+	}
+
+	t.Log(".ruby-version not installed - rbenv: version `2.89.2' is not installed (set by /Users/Vagrant/.ruby-version)")
+	{
+
+		message := "rbenv: version `2.89.2' is not installed (set by /Users/Vagrant/.ruby-version)"
+		installed, version, err := isSpecifiedRbenvRubyInstalled(message)
+		require.NoError(t, err)
+		require.Equal(t, false, installed)
+		require.Equal(t, "2.89.2", version)
+	}
+
+	t.Log(".ruby-version installed 2.3.5 (set by /Users/Vagrant/.ruby-version)")
+	{
+
+		message := "2.3.5 (set by /Users/Vagrant/.ruby-version)"
+		installed, version, err := isSpecifiedRbenvRubyInstalled(message)
+		require.NoError(t, err)
+		require.Equal(t, true, installed)
+		require.Equal(t, "2.3.5", version)
 	}
 }

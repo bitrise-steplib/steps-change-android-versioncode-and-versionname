@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -102,7 +103,7 @@ func main() {
 			updatedLine := ""
 
 			if cfg.NewVersionCode != nil {
-				finalVersionCode = string(*cfg.NewVersionCode + cfg.VersionCodeOffset)
+				finalVersionCode = strconv.Itoa(*cfg.NewVersionCode + cfg.VersionCodeOffset)
 				updatedLine = strings.Replace(line, oldVersionCode, finalVersionCode, -1)
 				updatedVersionCodes++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)

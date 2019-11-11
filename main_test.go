@@ -2,19 +2,18 @@ package main
 
 import (
 	"regexp"
+	"strconv"
 	"testing"
 )
 
-// const (
-// 	sampleCodeWithoutComments =
-// 	sampleNameWithoutComments =
-
-// 	sampleCodeWithComments =
-// 	sampleNameWithComments =
-
-// 	sampleCodeWithCommentsAndVar = `versionCode myVar//close comment`
-// 	sampleNameWithCommentsAndVar = `versionName myVar // far comment`
-// )
+func Test_typeConv(t *testing.T) {
+	if string(323) != "Ń" {
+		t.Fatal("invalid type conversion")
+	}
+	if strconv.Itoa(323) != "323" {
+		t.Fatal("invalid type conversion")
+	}
+}
 
 func Test_regexPatterns(t *testing.T) {
 	for _, tt := range []struct {

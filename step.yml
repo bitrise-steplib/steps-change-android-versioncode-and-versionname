@@ -1,6 +1,33 @@
 title: Change Android versionCode and versionName
-summary: Change Android versionCode and versionName in build.gradle file.
-description: Change your Android project's versionCode and versionName in build.gradle file.
+summary: Updates the Android versionCode and versionName in your project's `build.gradle` file.
+description: |-
+  Modifies the version information of your Android app by updating versionCode and versionName attributes in your project's `build.gradle` file before you'd publish your app to Google Play Store.
+
+  ### Configuring the Step
+  
+  1. Insert the **Change Android versionCode and versionName** Step before a build Step such as **Android Build** or **Gradle Runner** in your Workflow.
+  2. Click the Step to modify its input fields.
+  3. Add the file path to the **Path to the build.gradle file** so that the Step knows where to find the file that contains the versionCode and versionName attributes.
+  4. Provide a new versionName in the **New versionName** input. If you leave this input empty, the previous versionName will be displayed on Google Play Store. The input's value must be a string in this format `<major>.<minor>.<point>`.
+  5. Provide a versionCode in the **New versionCode** input to track app versions. If you leave this input empty, you will release your app with the version that is already set in the `build.gradle` file's `versionCode` attribute. The input's value must be an integer.
+  If you wish to offset the value you set in the **New versionCode** input, then you can use the **versionCode Offset** input to add the offset integer value here. This number will be added to the versionCode's value.
+  
+  ### Troubleshooting
+  
+  The **Change Android versionCode and versionName** Step must be inserted BEFORE the **Android Build** Step as the former makes sure you  upload the build with the right versionCode and versionName to Google Play Store.
+
+
+  ### Useful links
+  
+  [About Android versionCode and versionNumber](https://developer.android.com/studio/publish/versioning)
+  [Build versioning](https://devcenter.bitrise.io/builds/build-numbering-and-app-versioning/)
+
+
+  ### Related Steps
+  
+  [Android Sign](https://www.bitrise.io/integrations/steps/sign-apk)
+  [Android Build](https://www.bitrise.io/integrations/steps/android-build)
+  [Gradle Runner](https://www.bitrise.io/integrations/steps/gradle-runner)
 website: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 source_code_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 support_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname

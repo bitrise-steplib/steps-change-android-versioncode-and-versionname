@@ -19,15 +19,15 @@ description: |-
 
   ### Useful links
   
-  [About Android versionCode and versionNumber](https://developer.android.com/studio/publish/versioning)
-  [Build versioning](https://devcenter.bitrise.io/builds/build-numbering-and-app-versioning/)
+  - [About Android versionCode and versionNumber](https://developer.android.com/studio/publish/versioning)
+  - [Build versioning](https://devcenter.bitrise.io/builds/build-numbering-and-app-versioning/)
 
 
   ### Related Steps
   
-  [Android Sign](https://www.bitrise.io/integrations/steps/sign-apk)
-  [Android Build](https://www.bitrise.io/integrations/steps/android-build)
-  [Gradle Runner](https://www.bitrise.io/integrations/steps/gradle-runner)
+  - [Android Sign](https://www.bitrise.io/integrations/steps/sign-apk)
+  - [Android Build](https://www.bitrise.io/integrations/steps/android-build)
+  - [Gradle Runner](https://www.bitrise.io/integrations/steps/gradle-runner)
 website: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 source_code_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname
 support_url: https://github.com/bitrise-community/steps-change-android-versioncode-and-versionname

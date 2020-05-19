@@ -109,6 +109,8 @@ outputs:
   - ANDROID_VERSION_NAME:
     opts:
       title: Final Android versionName in build.gradle file
+      description: Will not be set if this step does not overwrite versionName
   - ANDROID_VERSION_CODE:
     opts:
       title: Final Android versionCode in build.gradle file
+      description: Will not be set if this step does not overwrite versionCode

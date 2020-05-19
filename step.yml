@@ -7,7 +7,7 @@ description: |-
   
   1. Insert the **Change Android versionCode and versionName** Step before a build Step such as **Android Build** or **Gradle Runner** in your Workflow.
   2. Click the Step to modify its input fields.
-  3. Add the file path to the **Path to the build.gradle file** so that the Step knows where to find the file that contains the versionCode and versionName attributes.
+  3. Add the file path to the **Path to the build.gradle file** so that the Step knows where to find the file that contains the versionCode and versionName attributes. This is probably app/build.gradle *not* the project root build.gradle.
   4. Provide a new versionName in the **New versionName** input. If you leave this input empty, the previous versionName will be displayed on Google Play Store. The input's value must be a string in this format `<major>.<minor>.<point>`.
   5. Provide a versionCode in the **New versionCode** input to track app versions. If you leave this input empty, you will release your app with the version that is already set in the `build.gradle` file's `versionCode` attribute. The input's value must be an integer.
   If you wish to offset the value you set in the **New versionCode** input, then you can use the **versionCode Offset** input to add the offset integer value here. This number will be added to the versionCode's value.
@@ -56,7 +56,7 @@ inputs:
   - build_gradle_path: $BITRISE_SOURCE_DIR/app/build.gradle
     opts:
       title: Path to the build.gradle file
-      summary: Path to the build.gradle file shows the versionCode and versionName settings.
+      summary: Path to the build.gradle file which contains versionCode and versionName settings. This is probably app/build.gradle and not project root build.gradle
       is_required: true
   - new_version_name:
     opts:

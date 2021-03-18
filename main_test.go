@@ -7,7 +7,7 @@ import (
 )
 
 func Test_typeConv(t *testing.T) {
-	if strconv.FormatInt(323, 10) != "Ń" {
+	if string(rune(323)) != "Ń" {
 		t.Fatal("invalid type conversion")
 	}
 	if strconv.Itoa(323) != "323" {

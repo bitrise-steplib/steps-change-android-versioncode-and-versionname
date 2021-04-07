@@ -1,9 +1,14 @@
 package main
 
 import (
+	"io"
+	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
+
+	"github.com/bitrise-io/go-utils/pointers"
 )
 
 func Test_typeConv(t *testing.T) {
@@ -88,5 +93,58 @@ func Test_regexPatterns(t *testing.T) {
 		if got[1] != tt.want {
 			t.Errorf("got: (%v), want: (%v)", got[1], tt.want)
 		}
+	}
+}
+
+func TestBuildGradleVersionUpdater_UpdateVersion(t *testing.T) {
+	tests := []struct {
+		name              string
+		buildGradleReader io.Reader
+		newVersionCode    *int
+		versionCodeOffset int
+		newVersionName    *string
+
+		want    *UpdateResult
+		wantErr bool
+	}{
+		{
+			name:              "Updates versionCode variable",
+			buildGradleReader: strings.NewReader("versionCode rootProject.ext.versionCode"),
+			newVersionCode:    pointers.NewIntPtr(555),
+			want:              &UpdateResult{NewContent: "versionCode 555", FinalVersionCode: "555", UpdatedVersionCodes: 1},
+		},
+		{
+			name:              "Updates versionName variable",
+			buildGradleReader: strings.NewReader("versionName rootProject.ext.versionName"),
+			newVersionName:    pointers.NewStringPtr("1.1.0"),
+			want:              &UpdateResult{NewContent: `versionName "1.1.0"`, FinalVersionName: "1.1.0", UpdatedVersionNames: 1},
+		},
+		{
+			name:              "Does not touch ABI version code mapping",
+			buildGradleReader: strings.NewReader(`def versionCodes = ["armeabi-v7a": 1, "x86": 2, "arm64-v8a": 3, "x86_64": 4]`),
+			newVersionCode:    pointers.NewIntPtr(555),
+			want:              &UpdateResult{NewContent: `def versionCodes = ["armeabi-v7a": 1, "x86": 2, "arm64-v8a": 3, "x86_64": 4]`},
+		},
+		{
+			name:              "Does not touch per ABI version selector",
+			buildGradleReader: strings.NewReader(`versionCodes.get(abi) * 1000 + defaultConfig.versionCode`),
+			newVersionCode:    pointers.NewIntPtr(555),
+			want:              &UpdateResult{NewContent: `versionCodes.get(abi) * 1000 + defaultConfig.versionCode`},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := BuildGradleVersionUpdater{
+				buildGradleReader: tt.buildGradleReader,
+			}
+			got, err := u.UpdateVersion(tt.newVersionCode, tt.versionCodeOffset, tt.newVersionName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("BuildGradleVersionUpdater.UpdateVersion() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("BuildGradleVersionUpdater.UpdateVersion() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

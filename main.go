@@ -114,7 +114,13 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode *int, versionCod
 			updatedLine := ""
 
 			if newVersionName != nil {
-				res.FinalVersionName = *newVersionName
+				quotedNewVersionName := *newVersionName
+				if !(strings.HasPrefix(quotedNewVersionName, `"`) && strings.HasSuffix(quotedNewVersionName, `"`)) {
+					quotedNewVersionName = strings.TrimSuffix(quotedNewVersionName, `"`)
+					quotedNewVersionName = `"` + quotedNewVersionName + `"`
+					log.Warnf(`Leading and/or trailing " character missing from new_version_name, adding quotation char: %s -> %s`, *newVersionName, quotedNewVersionName)
+				}
+				res.FinalVersionName = quotedNewVersionName
 				updatedLine = strings.Replace(line, oldVersionName, res.FinalVersionName, -1)
 				res.UpdatedVersionNames++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)

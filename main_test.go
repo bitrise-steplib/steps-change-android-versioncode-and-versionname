@@ -116,8 +116,14 @@ func TestBuildGradleVersionUpdater_UpdateVersion(t *testing.T) {
 		{
 			name:              "Updates versionName variable",
 			buildGradleReader: strings.NewReader("versionName rootProject.ext.versionName"),
-			newVersionName:    pointers.NewStringPtr("1.1.0"),
-			want:              &UpdateResult{NewContent: `versionName "1.1.0"`, FinalVersionName: "1.1.0", UpdatedVersionNames: 1},
+			newVersionName:    pointers.NewStringPtr(`"1.1.0"`),
+			want:              &UpdateResult{NewContent: `versionName "1.1.0"`, FinalVersionName: `"1.1.0"`, UpdatedVersionNames: 1},
+		},
+		{
+			name:              "Updates versionName variable - newVersionName withouth quotation char",
+			buildGradleReader: strings.NewReader("versionName rootProject.ext.versionName"),
+			newVersionName:    pointers.NewStringPtr(`1.1.0`),
+			want:              &UpdateResult{NewContent: `versionName "1.1.0"`, FinalVersionName: `"1.1.0"`, UpdatedVersionNames: 1},
 		},
 		{
 			name:              "Does not touch ABI version code mapping",

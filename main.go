@@ -71,20 +71,24 @@ func failf(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+// BuildGradleVersionUpdater updates versionName and versionCode in the given build.gradle file.
 type BuildGradleVersionUpdater struct {
 	buildGradleReader io.Reader
 }
 
+// NewBuildGradleVersionUpdater constructs a new BuildGradleVersionUpdater.
 func NewBuildGradleVersionUpdater(buildGradleReader io.Reader) BuildGradleVersionUpdater {
 	return BuildGradleVersionUpdater{buildGradleReader: buildGradleReader}
 }
 
+// UpdateResult stors the result of the version update.
 type UpdateResult struct {
 	NewContent                               string
 	FinalVersionCode, FinalVersionName       string
 	UpdatedVersionCodes, UpdatedVersionNames int
 }
 
+// UpdateVersion executes the version updates.
 func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode *int, versionCodeOffset int, newVersionName *string) (*UpdateResult, error) {
 	res := UpdateResult{}
 	var err error

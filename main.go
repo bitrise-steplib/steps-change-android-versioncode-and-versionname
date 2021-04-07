@@ -71,6 +71,60 @@ func failf(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+type BuildGradleVersionUpdater struct {
+	buildGradleReader io.Reader
+}
+
+func NewBuildGradleVersionUpdater(buildGradleReader io.Reader) BuildGradleVersionUpdater {
+	return BuildGradleVersionUpdater{buildGradleReader: buildGradleReader}
+}
+
+type UpdateResult struct {
+	NewContent                               string
+	FinalVersionCode, FinalVersionName       string
+	UpdatedVersionCodes, UpdatedVersionNames int
+}
+
+func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode *int, versionCodeOffset int, newVersionName *string) (*UpdateResult, error) {
+	res := UpdateResult{}
+	var err error
+
+	res.NewContent, err = findAndUpdate(u.buildGradleReader, map[*regexp.Regexp]updateFn{
+		regexp.MustCompile(versionCodeRegexPattern): func(line string, lineNum int, match []string) string {
+			oldVersionCode := match[1]
+			res.FinalVersionCode = oldVersionCode
+			updatedLine := ""
+
+			if newVersionCode != nil {
+				res.FinalVersionCode = strconv.Itoa(*newVersionCode + versionCodeOffset)
+				updatedLine = strings.Replace(line, oldVersionCode, res.FinalVersionCode, -1)
+				res.UpdatedVersionCodes++
+				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
+			}
+
+			return updatedLine
+		},
+		regexp.MustCompile(versionNameRegexPattern): func(line string, lineNum int, match []string) string {
+			oldVersionName := match[1]
+			res.FinalVersionName = oldVersionName
+			updatedLine := ""
+
+			if newVersionName != nil {
+				res.FinalVersionName = *newVersionName
+				updatedLine = strings.Replace(line, oldVersionName, res.FinalVersionName, -1)
+				res.UpdatedVersionNames++
+				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
+			}
+
+			return updatedLine
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
 func main() {
 	var cfg config
 	if err := stepconf.Parse(&cfg); err != nil {
@@ -93,57 +147,26 @@ func main() {
 		failf("Failed to read build.gradle file, error: %s", err)
 	}
 
-	var finalVersionCode, finalVersionName string
-	var updatedVersionCodes, updatedVersionNames int
-
-	updatedBuildGradleContent, err := findAndUpdate(f, map[*regexp.Regexp]updateFn{
-		regexp.MustCompile(versionCodeRegexPattern): func(line string, lineNum int, match []string) string {
-			oldVersionCode := match[1]
-			finalVersionCode = oldVersionCode
-			updatedLine := ""
-
-			if cfg.NewVersionCode != nil {
-				finalVersionCode = strconv.Itoa(*cfg.NewVersionCode + cfg.VersionCodeOffset)
-				updatedLine = strings.Replace(line, oldVersionCode, finalVersionCode, -1)
-				updatedVersionCodes++
-				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
-			}
-
-			return updatedLine
-		},
-		regexp.MustCompile(versionNameRegexPattern): func(line string, lineNum int, match []string) string {
-			oldVersionName := match[1]
-			finalVersionName = oldVersionName
-			updatedLine := ""
-
-			if cfg.NewVersionName != nil {
-				finalVersionName = *cfg.NewVersionName
-				updatedLine = strings.Replace(line, oldVersionName, finalVersionName, -1)
-				updatedVersionNames++
-				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
-			}
-
-			return updatedLine
-		},
-	})
+	versionUpdater := NewBuildGradleVersionUpdater(f)
+	res, err := versionUpdater.UpdateVersion(cfg.NewVersionCode, cfg.VersionCodeOffset, cfg.NewVersionName)
 	if err != nil {
-		failf("Failed to scann build.gradle file, error: %s", err)
+		failf("Failed to update versions: %s", err)
 	}
 
 	//
 	// export outputs
 	if err := exportOutputs(map[string]string{
-		"ANDROID_VERSION_NAME": finalVersionName,
-		"ANDROID_VERSION_CODE": finalVersionCode,
+		"ANDROID_VERSION_NAME": res.FinalVersionName,
+		"ANDROID_VERSION_CODE": res.FinalVersionCode,
 	}); err != nil {
 		failf("Failed to export outputs, error: %s", err)
 	}
 
-	if err := fileutil.WriteStringToFile(cfg.BuildGradlePth, updatedBuildGradleContent); err != nil {
+	if err := fileutil.WriteStringToFile(cfg.BuildGradlePth, res.NewContent); err != nil {
 		failf("Failed to write build.gradle file, error: %s", err)
 	}
 
 	fmt.Println()
-	log.Donef("%d versionCode updated", updatedVersionCodes)
-	log.Donef("%d versionName updated", updatedVersionNames)
+	log.Donef("%d versionCode updated", res.UpdatedVersionCodes)
+	log.Donef("%d versionName updated", res.UpdatedVersionNames)
 }

@@ -19,7 +19,7 @@ const (
 	// versionCode — A positive integer [...] -> https://developer.android.com/studio/publish/versioning
 	versionCodeRegexPattern = `^versionCode(?:\s|=)+(.*?)(?:\s|\/\/|$)`
 	// versionName — A string used as the version number shown to users [...] -> https://developer.android.com/studio/publish/versioning
-	versionNameRegexPattern = `^versionName(?:=|'|"|\s)+(.*?)(?:'|"|\s|\/\/|$)`
+	versionNameRegexPattern = `^versionName(?:=|\s)+(.*?)(?:\s|\/\/|$)`
 )
 
 type config struct {
@@ -83,13 +83,15 @@ func NewBuildGradleVersionUpdater(buildGradleReader io.Reader) BuildGradleVersio
 
 // UpdateResult stors the result of the version update.
 type UpdateResult struct {
-	NewContent                               string
-	FinalVersionCode, FinalVersionName       string
-	UpdatedVersionCodes, UpdatedVersionNames int
+	NewContent          string
+	FinalVersionCode    string
+	FinalVersionName    string
+	UpdatedVersionCodes int
+	UpdatedVersionNames int
 }
 
 // UpdateVersion executes the version updates.
-func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode *int, versionCodeOffset int, newVersionName *string) (*UpdateResult, error) {
+func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode, versionCodeOffset int, newVersionName string) (UpdateResult, error) {
 	res := UpdateResult{}
 	var err error
 
@@ -99,8 +101,8 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode *int, versionCod
 			res.FinalVersionCode = oldVersionCode
 			updatedLine := ""
 
-			if newVersionCode != nil {
-				res.FinalVersionCode = strconv.Itoa(*newVersionCode + versionCodeOffset)
+			if newVersionCode > 0 {
+				res.FinalVersionCode = strconv.Itoa(newVersionCode + versionCodeOffset)
 				updatedLine = strings.Replace(line, oldVersionCode, res.FinalVersionCode, -1)
 				res.UpdatedVersionCodes++
 				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
@@ -108,18 +110,20 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode *int, versionCod
 
 			return updatedLine
 		},
+
 		regexp.MustCompile(versionNameRegexPattern): func(line string, lineNum int, match []string) string {
 			oldVersionName := match[1]
 			res.FinalVersionName = oldVersionName
 			updatedLine := ""
 
-			if newVersionName != nil {
-				quotedNewVersionName := *newVersionName
+			if newVersionName != "" {
+				quotedNewVersionName := newVersionName
 				if !(strings.HasPrefix(quotedNewVersionName, `"`) && strings.HasSuffix(quotedNewVersionName, `"`)) {
 					quotedNewVersionName = strings.TrimSuffix(quotedNewVersionName, `"`)
 					quotedNewVersionName = `"` + quotedNewVersionName + `"`
-					log.Warnf(`Leading and/or trailing " character missing from new_version_name, adding quotation char: %s -> %s`, *newVersionName, quotedNewVersionName)
+					log.Warnf(`Leading and/or trailing " character missing from new_version_name, adding quotation char: %s -> %s`, newVersionName, quotedNewVersionName)
 				}
+
 				res.FinalVersionName = quotedNewVersionName
 				updatedLine = strings.Replace(line, oldVersionName, res.FinalVersionName, -1)
 				res.UpdatedVersionNames++
@@ -130,9 +134,9 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode *int, versionCod
 		},
 	})
 	if err != nil {
-		return nil, err
+		return UpdateResult{}, err
 	}
-	return &res, nil
+	return res, nil
 }
 
 func main() {
@@ -157,8 +161,20 @@ func main() {
 		failf("Failed to read build.gradle file, error: %s", err)
 	}
 
+	// versionCode — A positive integer used as an internal version number.
+	// https://developer.android.com/studio/publish/versioning#appversioning
+	newVersionCode := 0
+	if cfg.NewVersionCode != nil {
+		newVersionCode = *cfg.NewVersionCode
+	}
+
+	newVersionName := ""
+	if cfg.NewVersionName != nil {
+		newVersionName = *cfg.NewVersionName
+	}
+
 	versionUpdater := NewBuildGradleVersionUpdater(f)
-	res, err := versionUpdater.UpdateVersion(cfg.NewVersionCode, cfg.VersionCodeOffset, cfg.NewVersionName)
+	res, err := versionUpdater.UpdateVersion(newVersionCode, cfg.VersionCodeOffset, newVersionName)
 	if err != nil {
 		failf("Failed to update versions: %s", err)
 	}

@@ -171,6 +171,18 @@ func TestBuildGradleVersionUpdater_UpdateVersion(t *testing.T) {
 			newVersionName:    `1.1.0`,
 			want:              UpdateResult{NewContent: `versionName "1.1.0"`, FinalVersionName: `"1.1.0"`, UpdatedVersionNames: 1},
 		},
+		{
+			name:              "Adds quotation mark to newVersionName if leading is missing",
+			buildGradleReader: strings.NewReader("versionName rootProject.ext.versionName"),
+			newVersionName:    `1.1.0"`,
+			want:              UpdateResult{NewContent: `versionName "1.1.0"`, FinalVersionName: `"1.1.0"`, UpdatedVersionNames: 1},
+		},
+		{
+			name:              "Adds quotation mark to newVersionName if traling is missing",
+			buildGradleReader: strings.NewReader("versionName rootProject.ext.versionName"),
+			newVersionName:    `"1.1.0`,
+			want:              UpdateResult{NewContent: `versionName "1.1.0"`, FinalVersionName: `"1.1.0"`, UpdatedVersionNames: 1},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -119,6 +119,7 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode, versionCodeOffs
 			if newVersionName != "" {
 				quotedNewVersionName := newVersionName
 				if !(strings.HasPrefix(quotedNewVersionName, `"`) && strings.HasSuffix(quotedNewVersionName, `"`)) {
+					quotedNewVersionName = strings.TrimPrefix(quotedNewVersionName, `"`)
 					quotedNewVersionName = strings.TrimSuffix(quotedNewVersionName, `"`)
 					quotedNewVersionName = `"` + quotedNewVersionName + `"`
 					log.Warnf(`Leading and/or trailing " character missing from new_version_name, adding quotation char: %s -> %s`, newVersionName, quotedNewVersionName)

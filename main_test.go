@@ -174,9 +174,7 @@ func TestBuildGradleVersionUpdater_UpdateVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u := BuildGradleVersionUpdater{
-				buildGradleReader: tt.buildGradleReader,
-			}
+			u := NewBuildGradleVersionUpdater(tt.buildGradleReader)
 			got, err := u.UpdateVersion(tt.newVersionCode, tt.versionCodeOffset, tt.newVersionName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("BuildGradleVersionUpdater.UpdateVersion() error = %v, wantErr %v", err, tt.wantErr)

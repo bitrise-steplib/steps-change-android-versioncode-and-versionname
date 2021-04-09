@@ -23,10 +23,10 @@ const (
 )
 
 type config struct {
-	BuildGradlePth    string  `env:"build_gradle_path,file"`
-	NewVersionName    *string `env:"new_version_name"`
-	NewVersionCode    *int    `env:"new_version_code"`
-	VersionCodeOffset int     `env:"version_code_offset"`
+	BuildGradlePth    string `env:"build_gradle_path,file"`
+	NewVersionName    string `env:"new_version_name"`
+	NewVersionCode    int    `env:"new_version_code,range]0..2100000000]"`
+	VersionCodeOffset int    `env:"version_code_offset"`
 }
 
 type updateFn func(line string, lineNum int, matches []string) string
@@ -147,7 +147,7 @@ func main() {
 	stepconf.Print(cfg)
 	fmt.Println()
 
-	if cfg.NewVersionName == nil && cfg.NewVersionCode == nil {
+	if cfg.NewVersionName == "" && cfg.NewVersionCode == 0 {
 		failf("Neither NewVersionCode nor NewVersionName are provided, however one of them is required.")
 	}
 
@@ -161,20 +161,8 @@ func main() {
 		failf("Failed to read build.gradle file, error: %s", err)
 	}
 
-	// versionCode — A positive integer used as an internal version number.
-	// https://developer.android.com/studio/publish/versioning#appversioning
-	newVersionCode := 0
-	if cfg.NewVersionCode != nil {
-		newVersionCode = *cfg.NewVersionCode
-	}
-
-	newVersionName := ""
-	if cfg.NewVersionName != nil {
-		newVersionName = *cfg.NewVersionName
-	}
-
 	versionUpdater := NewBuildGradleVersionUpdater(f)
-	res, err := versionUpdater.UpdateVersion(newVersionCode, cfg.VersionCodeOffset, newVersionName)
+	res, err := versionUpdater.UpdateVersion(cfg.NewVersionCode, cfg.VersionCodeOffset, cfg.NewVersionName)
 	if err != nil {
 		failf("Failed to update versions: %s", err)
 	}

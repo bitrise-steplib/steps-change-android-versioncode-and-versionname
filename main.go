@@ -171,7 +171,7 @@ func main() {
 	//
 	// export outputs
 	if err := exportOutputs(map[string]string{
-		"ANDROID_VERSION_NAME": res.FinalVersionName,
+		"ANDROID_VERSION_NAME": removeQuotationMarks(res.FinalVersionName),
 		"ANDROID_VERSION_CODE": res.FinalVersionCode,
 	}); err != nil {
 		failf("Failed to export outputs, error: %s", err)
@@ -184,4 +184,8 @@ func main() {
 	fmt.Println()
 	log.Donef("%d versionCode updated", res.UpdatedVersionCodes)
 	log.Donef("%d versionName updated", res.UpdatedVersionNames)
+}
+
+func removeQuotationMarks(value string) string {
+	return strings.Trim(value, `"'`)
 }

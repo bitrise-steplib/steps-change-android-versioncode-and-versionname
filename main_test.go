@@ -198,3 +198,39 @@ func TestBuildGradleVersionUpdater_UpdateVersion(t *testing.T) {
 		})
 	}
 }
+
+func Test_removeQuotationMarks(t *testing.T) {
+	tests := []struct {
+		name string
+		args string
+		want string
+	}{
+		{
+			name: "Nothing to remove",
+			args: `FooBar`,
+			want: `FooBar`,
+		},
+		{
+			name: "Single Quote",
+			args: `'FooBar'`,
+			want: `FooBar`,
+		},
+		{
+			name: "Double Quote",
+			args: `"FooBar"`,
+			want: `FooBar`,
+		},
+		{
+			name: "Stress",
+			args: `"'"FooBar'"''`,
+			want: `FooBar`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := removeQuotationMarks(tt.args); got != tt.want {
+				t.Errorf("removeQuotationMarks() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

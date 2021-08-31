@@ -43,8 +43,8 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -x
-            if [[ "${ANDROID_VERSION_NAME}" != '"2.0"' ]]; then
-                echo 'Invalid ANDROID_VERSION_NAME, should be: "2.0"'
+            if [[ "${ANDROID_VERSION_NAME}" != '2.0' ]]; then
+                echo 'Invalid ANDROID_VERSION_NAME, should be: 2.0'
                 exit 1
             elif (( ${ANDROID_VERSION_CODE} != 2 )); then
                 echo "Invalid ANDROID_VERSION_CODE, should be: 2"
@@ -65,8 +65,8 @@ workflows:
             #!/usr/bin/env bash
             set -x
 
-            if [[ "${ANDROID_VERSION_NAME}" != '"4.0"' ]]; then
-                echo 'Invalid ANDROID_VERSION_NAME, should be: "4.0"'
+            if [[ "${ANDROID_VERSION_NAME}" != '4.0' ]]; then
+                echo 'Invalid ANDROID_VERSION_NAME, should be: 4.0'
                 exit 1
             elif (( ${ANDROID_VERSION_CODE} != 4 )); then
                 echo "Invalid ANDROID_VERSION_CODE, should be: 4"

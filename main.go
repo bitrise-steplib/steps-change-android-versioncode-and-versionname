@@ -25,7 +25,7 @@ const (
 type config struct {
 	BuildGradlePth    string `env:"build_gradle_path,file"`
 	NewVersionName    string `env:"new_version_name"`
-	NewVersionCode    int    `env:"new_version_code,range]0..2100000000]"`
+	NewVersionCode    int    `env:"new_version_code,range[0..2100000000]"`
 	VersionCodeOffset int    `env:"version_code_offset"`
 }
 
@@ -101,7 +101,7 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode, versionCodeOffs
 			res.FinalVersionCode = oldVersionCode
 			updatedLine := ""
 
-			if newVersionCode > 0 {
+			if (newVersionCode + versionCodeOffset) > 0 {
 				res.FinalVersionCode = strconv.Itoa(newVersionCode + versionCodeOffset)
 				updatedLine = strings.Replace(line, oldVersionCode, res.FinalVersionCode, -1)
 				res.UpdatedVersionCodes++
@@ -148,8 +148,8 @@ func main() {
 	stepconf.Print(cfg)
 	fmt.Println()
 
-	if cfg.NewVersionName == "" && cfg.NewVersionCode == 0 {
-		failf("Neither NewVersionCode nor NewVersionName are provided, however one of them is required.")
+	if cfg.NewVersionName == "" && cfg.NewVersionCode == 0 && cfg.VersionCodeOffset == 0 {
+		failf("Neither NewVersionName nor a valid NewVersionCode is provided, however one of them is required.")
 	}
 
 	//

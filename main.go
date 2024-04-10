@@ -17,9 +17,9 @@ import (
 
 const (
 	// versionCode — A positive integer [...] -> https://developer.android.com/studio/publish/versioning
-	versionCodeRegexPattern = `^versionCode(?:\s|=)+(.*?)(?:\s*\/\/.*)?$`
+	versionCodeRegexPattern = `^versionCode(?:\s|=)+(.*?)\s*(?:\/\/.*)?$`
 	// versionName — A string used as the version number shown to users [...] -> https://developer.android.com/studio/publish/versioning
-	versionNameRegexPattern = `^versionName(?:\s|=)+(.*?)(?:\s*\/\/.*)?$`
+	versionNameRegexPattern = `^versionName(?:\s|=)+(.*?)\s*(?:\/\/.*)?$`
 )
 
 type config struct {

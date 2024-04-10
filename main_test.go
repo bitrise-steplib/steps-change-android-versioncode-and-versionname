@@ -26,6 +26,7 @@ func Test_regexPatterns(t *testing.T) {
 	}{
 		// versionCode regex
 		{`versionCode 1`, "1", versionCodeRegexPattern},
+		{`versionCode 1    `, "1", versionCodeRegexPattern},
 		{`versionCode 1//close comment`, "1", versionCodeRegexPattern},
 		{`versionCode 1 // far comment`, "1", versionCodeRegexPattern},
 		{`versionCode myWar`, "myWar", versionCodeRegexPattern},
@@ -51,6 +52,7 @@ func Test_regexPatterns(t *testing.T) {
 
 		// versionName regex
 		{`versionName "1.0"`, `"1.0"`, versionNameRegexPattern},
+		{`versionName "1.0"   `, `"1.0"`, versionNameRegexPattern},
 		{`versionName "1.0"//close comment`, `"1.0"`, versionNameRegexPattern},
 		{`versionName "1.0" // far comment`, `"1.0"`, versionNameRegexPattern},
 		{`versionName '1.0'`, `'1.0'`, versionNameRegexPattern},

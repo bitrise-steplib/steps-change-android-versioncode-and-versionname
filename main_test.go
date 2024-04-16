@@ -26,11 +26,17 @@ func Test_regexPatterns(t *testing.T) {
 	}{
 		// versionCode regex
 		{`versionCode 1`, "1", versionCodeRegexPattern},
+		{`versionCode 1    `, "1", versionCodeRegexPattern},
 		{`versionCode 1//close comment`, "1", versionCodeRegexPattern},
 		{`versionCode 1 // far comment`, "1", versionCodeRegexPattern},
 		{`versionCode myWar`, "myWar", versionCodeRegexPattern},
 		{`versionCode myWar//close comment`, "myWar", versionCodeRegexPattern},
 		{`versionCode myWar // far comment`, "myWar", versionCodeRegexPattern},
+		{
+			`versionCode 100+Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())`,
+			"100+Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())",
+			versionCodeRegexPattern,
+		},
 
 		{`versionCode = 1`, "1", versionCodeRegexPattern},
 		{`versionCode =1//close comment`, "1", versionCodeRegexPattern},
@@ -38,23 +44,15 @@ func Test_regexPatterns(t *testing.T) {
 		{`versionCode = myWar`, "myWar", versionCodeRegexPattern},
 		{`versionCode   =  myWar//close comment`, "myWar", versionCodeRegexPattern},
 		{`versionCode  = myWar // far comment`, "myWar", versionCodeRegexPattern},
-
-		{`versionCode 1` + "\n", "1", versionCodeRegexPattern},
-		{`versionCode 1//close comment` + "\n", "1", versionCodeRegexPattern},
-		{`versionCode 1 // far comment` + "\n", "1", versionCodeRegexPattern},
-		{`versionCode myWar` + "\n", "myWar", versionCodeRegexPattern},
-		{`versionCode myWar//close comment` + "\n", "myWar", versionCodeRegexPattern},
-		{`versionCode myWar // far comment` + "\n", "myWar", versionCodeRegexPattern},
-
-		{`versionCode = 1` + "\n", "1", versionCodeRegexPattern},
-		{`versionCode =1//close comment` + "\n", "1", versionCodeRegexPattern},
-		{`versionCode= 1 // far comment` + "\n", "1", versionCodeRegexPattern},
-		{`versionCode = myWar` + "\n", "myWar", versionCodeRegexPattern},
-		{`versionCode   =  myWar//close comment` + "\n", "myWar", versionCodeRegexPattern},
-		{`versionCode  = myWar // far comment` + "\n", "myWar", versionCodeRegexPattern},
+		{
+			`versionCode=100+Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())`,
+			"100+Integer.parseInt('git rev-list HEAD --count'.execute().text.trim())",
+			versionCodeRegexPattern,
+		},
 
 		// versionName regex
 		{`versionName "1.0"`, `"1.0"`, versionNameRegexPattern},
+		{`versionName "1.0"   `, `"1.0"`, versionNameRegexPattern},
 		{`versionName "1.0"//close comment`, `"1.0"`, versionNameRegexPattern},
 		{`versionName "1.0" // far comment`, `"1.0"`, versionNameRegexPattern},
 		{`versionName '1.0'`, `'1.0'`, versionNameRegexPattern},
@@ -66,24 +64,7 @@ func Test_regexPatterns(t *testing.T) {
 		{`versionName myWar//close comment`, "myWar", versionNameRegexPattern},
 		{`versionName myWar // far comment`, "myWar", versionNameRegexPattern},
 		{`versionName = myWar // far comment`, "myWar", versionNameRegexPattern},
-
-		{`versionName "1.0"` + "\n", `"1.0"`, versionNameRegexPattern},
-		{`versionName "1.0"//close comment` + "\n", `"1.0"`, versionNameRegexPattern},
-		{`versionName="1.0" // far comment` + "\n", `"1.0"`, versionNameRegexPattern},
-		{`versionName '1.0'` + "\n", `'1.0'`, versionNameRegexPattern},
-		{`versionName '1.0'//close comment` + "\n", `'1.0'`, versionNameRegexPattern},
-		{`versionName '1.0' // far comment` + "\n", `'1.0'`, versionNameRegexPattern},
-		{`versionName = '1.0' // far comment` + "\n", `'1.0'`, versionNameRegexPattern},
-
-		{`versionName myWar` + "\n", "myWar", versionNameRegexPattern},
-		{`versionName myWar//close comment` + "\n", "myWar", versionNameRegexPattern},
-		{`versionName myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
-		{`versionName = myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
-
-		{`versionName myWar` + "\n", "myWar", versionNameRegexPattern},
-		{`versionName myWar//close comment` + "\n", "myWar", versionNameRegexPattern},
-		{`versionName myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
-		{`versionName=myWar // far comment` + "\n", "myWar", versionNameRegexPattern},
+		{`versionName=myWar // far comment`, "myWar", versionNameRegexPattern},
 	} {
 		t.Run(tt.sampleContent, func(t *testing.T) {
 			got := regexp.MustCompile(tt.regexPattern).FindStringSubmatch(tt.sampleContent)

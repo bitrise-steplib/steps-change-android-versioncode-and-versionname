@@ -107,7 +107,15 @@ func TestBuildGradleVersionUpdater_UpdateVersion(t *testing.T) {
 			name:              "versionCode needs to be a positive integer",
 			buildGradleReader: strings.NewReader("versionCode 1"),
 			newVersionCode:    0,
+			versionCodeOffset: 0,
 			want:              UpdateResult{NewContent: "versionCode 1", FinalVersionCode: "1"},
+		},
+		{
+			name:              "versionCode needs to be a positive integer",
+			buildGradleReader: strings.NewReader("versionCode 1"),
+			newVersionCode:    0,
+			versionCodeOffset: 10,
+			want:              UpdateResult{NewContent: "versionCode 10", FinalVersionCode: "10", UpdatedVersionCodes: 1},
 		},
 		{
 			name:              "Does not touch ABI version code mapping",

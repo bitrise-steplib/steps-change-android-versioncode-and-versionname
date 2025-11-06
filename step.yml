@@ -36,10 +36,11 @@ host_os_tags:
   - ubuntu-16.04
 project_type_tags:
   - android
-  - react-native
   - cordova
-  - ionic
   - flutter
+  - ionic
+  - kotlin-multiplatform
+  - react-native
 type_tags:
   - utility
 

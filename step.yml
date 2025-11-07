@@ -91,6 +91,8 @@ outputs:
   - ANDROID_VERSION_NAME:
     opts:
       title: Final Android versionName in build.gradle file
+      description: The final Android versionName set in the build.gradle file after the Step execution.
   - ANDROID_VERSION_CODE:
     opts:
       title: Final Android versionCode in build.gradle file
+      description: The final Android versionCode set in the build.gradle file after the Step execution.

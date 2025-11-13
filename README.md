@@ -22,12 +22,10 @@ If you wish to offset the value you set in the **New versionCode** input, then y
 
 The **Change Android versionCode and versionName** Step must be inserted BEFORE the **Android Build** Step as the former makes sure you  upload the build with the right versionCode and versionName to Google Play Store.
 
-
 ### Useful links
 
 - [About Android versionCode and versionNumber](https://developer.android.com/studio/publish/versioning)
 - [Build versioning](https://devcenter.bitrise.io/builds/build-numbering-and-app-versioning/)
-
 
 ### Related Steps
 
@@ -50,9 +48,9 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 | Key | Description | Flags | Default |
 | --- | --- | --- | --- |
 | `build_gradle_path` | Path to the build.gradle file shows the versionCode and versionName settings. | required | `$BITRISE_SOURCE_DIR/app/build.gradle` |
-| `new_version_name` | New versionName to set.   Specify a string value, such as `"1.0.0"`.   If the specified value is not surranded by double quote (`"`) characters, the step will add them.   Leave this input empty so that versionName remains unchanged. |  |  |
-| `new_version_code` | New versionCode to set.   Specify a positive integer value, such as `1`.   The greatest value Google Play allows for versionCode is 2100000000.   Clear this input's default value to leave the versionCode unchanged. |  | `$BITRISE_BUILD_NUMBER` |
-| `version_code_offset` | Offset value to add to `New versionCode`, for example: `1`.   Leave this input empty if you want the exact value you set in `New versionCode` input. |  |  |
+| `new_version_name` | New versionName to set. Specify a string value, such as `"1.0.0"`. If the specified value is not surranded by double quote (`"`) characters, the step will add them. Leave this input empty so that versionName remains unchanged. |  |  |
+| `new_version_code` | New versionCode to set. Specify a positive integer value, such as `1`. The greatest value Google Play allows for versionCode is 2100000000. Clear this input's default value to leave the versionCode unchanged. |  | `$BITRISE_BUILD_NUMBER` |
+| `version_code_offset` | Offset value to add to `New versionCode`, for example: `1`. Leave this input empty if you want the exact value you set in `New versionCode` input. |  |  |
 </details>
 
 <details>

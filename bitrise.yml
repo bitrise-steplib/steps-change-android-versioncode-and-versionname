@@ -5,13 +5,12 @@ app:
   envs:
   - SAMPLE_APP_REPOSITORY_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
   - GRADLE_TASK: assembleRelease
-  - GRADLEW_PATH: "./gradlew"
+  - GRADLEW_PATH: ./gradlew
 
 workflows:
   test:
     before_run:
-    - audit-this-step
-    - go-tests
+    - check
     steps:
     - script:
         title: remove _tmp dir
@@ -32,7 +31,7 @@ workflows:
     - path::./:
         title: step test
         inputs:
-        - build_gradle_path: "./app/build.gradle"
+        - build_gradle_path: ./app/build.gradle
         - new_version_name: "2.0"
         - new_version_code: "2"
         - version_code_offset: ""
@@ -53,7 +52,7 @@ workflows:
     - path::./:
         title: step test - offset
         inputs:
-        - build_gradle_path: "./app/build.gradle"
+        - build_gradle_path: ./app/build.gradle
         - new_version_name: "4.0"
         - new_version_code: "3"
         - version_code_offset: "1"
@@ -73,32 +72,10 @@ workflows:
                 exit 1
             fi
 
-  go-tests:
+  check:
     steps:
-    - go-list:
-    - golint:
-    - errcheck:
-    - go-test:
+    - git::https://github.com/bitrise-steplib/steps-check.git: { }
 
-  # ----------------------------------------------------------------
-  # --- Utility workflows
-  dep-update:
+  generate_readme:
     steps:
-    - script:
-        title: dep update
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            go get -u -v github.com/golang/dep/cmd/dep
-            dep ensure -v
-            dep ensure -v -update
-
-  # ----------------------------------------------------------------
-  # --- workflows to Share this step into a Step Library
-  audit-this-step:
-    steps:
-    - script:
-        title: audit step.yml
-        inputs:
-        - content: stepman audit --step-yml ./step.yml
+    - git::https://github.com/bitrise-steplib/steps-readme-generator.git@main: { }

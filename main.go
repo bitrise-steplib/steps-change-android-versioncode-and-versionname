@@ -160,6 +160,11 @@ func main() {
 	if err != nil {
 		failf(logger, "Failed to read build.gradle file, error: %s", err)
 	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			logger.Warnf("Failed to close build.gradle: %s", err)
+		}
+	}()
 
 	versionUpdater := NewBuildGradleVersionUpdater(f, logger)
 	res, err := versionUpdater.UpdateVersion(cfg.NewVersionCode, cfg.VersionCodeOffset, cfg.NewVersionName)

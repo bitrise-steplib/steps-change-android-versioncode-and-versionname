@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bitrise-io/go-steputils/stepconf"
-	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-steputils/v2/export"
+	"github.com/bitrise-io/go-steputils/v2/stepconf"
+	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 const (
@@ -56,29 +58,20 @@ func findAndUpdate(reader io.Reader, update map[*regexp.Regexp]updateFn) (string
 	return strings.Join(updatedLines, "\n"), scanner.Err()
 }
 
-func exportOutputs(outputs map[string]string) error {
-	for envKey, envValue := range outputs {
-		cmd := command.New("envman", "add", "--key", envKey, "--value", envValue)
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func failf(format string, v ...interface{}) {
-	log.Errorf(format, v...)
+func failf(logger log.Logger, format string, v ...interface{}) {
+	logger.Errorf(format, v...)
 	os.Exit(1)
 }
 
 // BuildGradleVersionUpdater updates versionName and versionCode in the given build.gradle file.
 type BuildGradleVersionUpdater struct {
 	buildGradleReader io.Reader
+	logger            log.Logger
 }
 
 // NewBuildGradleVersionUpdater constructs a new BuildGradleVersionUpdater.
-func NewBuildGradleVersionUpdater(buildGradleReader io.Reader) BuildGradleVersionUpdater {
-	return BuildGradleVersionUpdater{buildGradleReader: buildGradleReader}
+func NewBuildGradleVersionUpdater(buildGradleReader io.Reader, logger log.Logger) BuildGradleVersionUpdater {
+	return BuildGradleVersionUpdater{buildGradleReader: buildGradleReader, logger: logger}
 }
 
 // UpdateResult stors the result of the version update.
@@ -105,7 +98,7 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode, versionCodeOffs
 				res.FinalVersionCode = strconv.Itoa(newVersionCode + versionCodeOffset)
 				updatedLine = strings.Replace(line, oldVersionCode, res.FinalVersionCode, -1)
 				res.UpdatedVersionCodes++
-				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
+				u.logger.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 			}
 
 			return updatedLine
@@ -122,13 +115,13 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode, versionCodeOffs
 					quotedNewVersionName = strings.TrimPrefix(quotedNewVersionName, `"`)
 					quotedNewVersionName = strings.TrimSuffix(quotedNewVersionName, `"`)
 					quotedNewVersionName = `"` + quotedNewVersionName + `"`
-					log.Warnf(`Leading and/or trailing " character missing from new_version_name, adding quotation char: %s -> %s`, newVersionName, quotedNewVersionName)
+					u.logger.Warnf(`Leading and/or trailing " character missing from new_version_name, adding quotation char: %s -> %s`, newVersionName, quotedNewVersionName)
 				}
 
 				res.FinalVersionName = quotedNewVersionName
 				updatedLine = strings.Replace(line, oldVersionName, res.FinalVersionName, -1)
 				res.UpdatedVersionNames++
-				log.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
+				u.logger.Printf("updating line (%d): %s -> %s", lineNum, line, updatedLine)
 			}
 
 			return updatedLine
@@ -141,49 +134,55 @@ func (u BuildGradleVersionUpdater) UpdateVersion(newVersionCode, versionCodeOffs
 }
 
 func main() {
+	logger := log.NewLogger()
+	envRepo := env.NewRepository()
+	cmdFactory := command.NewFactory(envRepo)
+	fileManager := fileutil.NewFileManager()
+	exporter := export.NewExporter(cmdFactory, fileManager)
+
 	var cfg config
-	if err := stepconf.Parse(&cfg); err != nil {
-		failf("Issue with input: %s", err)
+	if err := stepconf.NewInputParser(envRepo).Parse(&cfg); err != nil {
+		failf(logger, "Issue with input: %s", err)
 	}
 	stepconf.Print(cfg)
 	fmt.Println()
 
 	if cfg.NewVersionName == "" && cfg.NewVersionCode == 0 {
-		failf("Neither NewVersionCode nor NewVersionName are provided, however one of them is required.")
+		failf(logger, "Neither NewVersionCode nor NewVersionName are provided, however one of them is required.")
 	}
 
 	//
 	// find versionName & versionCode with regexp
 	fmt.Println()
-	log.Infof("Updating versionName and versionCode in: %s", cfg.BuildGradlePth)
+	logger.Infof("Updating versionName and versionCode in: %s", cfg.BuildGradlePth)
 
 	f, err := os.Open(cfg.BuildGradlePth)
 	if err != nil {
-		failf("Failed to read build.gradle file, error: %s", err)
+		failf(logger, "Failed to read build.gradle file, error: %s", err)
 	}
 
-	versionUpdater := NewBuildGradleVersionUpdater(f)
+	versionUpdater := NewBuildGradleVersionUpdater(f, logger)
 	res, err := versionUpdater.UpdateVersion(cfg.NewVersionCode, cfg.VersionCodeOffset, cfg.NewVersionName)
 	if err != nil {
-		failf("Failed to update versions: %s", err)
+		failf(logger, "Failed to update versions: %s", err)
 	}
 
 	//
 	// export outputs
-	if err := exportOutputs(map[string]string{
-		"ANDROID_VERSION_NAME": removeQuotationMarks(res.FinalVersionName),
-		"ANDROID_VERSION_CODE": res.FinalVersionCode,
-	}); err != nil {
-		failf("Failed to export outputs, error: %s", err)
+	if err := exporter.ExportOutput("ANDROID_VERSION_NAME", removeQuotationMarks(res.FinalVersionName)); err != nil {
+		failf(logger, "Failed to export ANDROID_VERSION_NAME, error: %s", err)
+	}
+	if err := exporter.ExportOutput("ANDROID_VERSION_CODE", res.FinalVersionCode); err != nil {
+		failf(logger, "Failed to export ANDROID_VERSION_CODE, error: %s", err)
 	}
 
-	if err := fileutil.WriteStringToFile(cfg.BuildGradlePth, res.NewContent); err != nil {
-		failf("Failed to write build.gradle file, error: %s", err)
+	if err := fileManager.Write(cfg.BuildGradlePth, res.NewContent, 0644); err != nil {
+		failf(logger, "Failed to write build.gradle file, error: %s", err)
 	}
 
 	fmt.Println()
-	log.Donef("%d versionCode updated", res.UpdatedVersionCodes)
-	log.Donef("%d versionName updated", res.UpdatedVersionNames)
+	logger.Donef("%d versionCode updated", res.UpdatedVersionCodes)
+	logger.Donef("%d versionName updated", res.UpdatedVersionNames)
 }
 
 func removeQuotationMarks(value string) string {

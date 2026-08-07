@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 func Test_typeConv(t *testing.T) {
@@ -167,7 +169,7 @@ func TestBuildGradleVersionUpdater_UpdateVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u := NewBuildGradleVersionUpdater(tt.buildGradleReader)
+			u := NewBuildGradleVersionUpdater(tt.buildGradleReader, log.NewLogger())
 			got, err := u.UpdateVersion(tt.newVersionCode, tt.versionCodeOffset, tt.newVersionName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("BuildGradleVersionUpdater.UpdateVersion() error = %v, wantErr %v", err, tt.wantErr)

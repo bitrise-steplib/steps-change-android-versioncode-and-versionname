@@ -1,10 +1,14 @@
 module github.com/bitrise-steplib/steps-change-android-versioncode-and-versionname
 
-go 1.16
+go 1.21
 
 require (
-	github.com/bitrise-io/go-steputils v0.0.0-20201016102104-03ae3a6ded35
-	github.com/bitrise-io/go-utils v0.0.0-20210318101856-947ef8d6c529
-	github.com/stretchr/testify v1.7.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
+	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.34
+)
+
+require (
+	github.com/bitrise-io/go-utils v1.0.13 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 )
